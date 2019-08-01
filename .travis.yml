@@ -13,3 +13,10 @@ jdk:
   - openjdk11
   - openjdk12
   - openjdk13
+
+deploy:
+  provider: script
+  script: "cp .travis.settings.xml $HOME/.m2/settings.xml && mvn deploy -Ptravis"
+  skip_cleanup: true
+  on:
+    jdk: openjdk8
