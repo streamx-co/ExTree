@@ -783,16 +783,15 @@ public abstract class Expression {
     }
 
     /**
-     * Creates a {@link LambdaExpression} as a method receiving the specified
-     * {@code arguments}, returning the {@code resultType} and having {@code body}
-     * for its implementation.
+     * Creates a {@link LambdaExpression} as a method receiving the specified {@code arguments}, returning the
+     * {@code resultType} and having {@code body} for its implementation.
      * 
      * @param resultType The method return value.
      * @param body       The method implementation.
      * @param parameters The method parameters.
-     * @return A {@link LambdaExpression} as a method receiving the specified
-     *         {@code arguments}, returning the {@code resultType} and having
-     *         {@code body} for its implementation.
+     * @param locals     The method locals.
+     * @return A {@link LambdaExpression} as a method receiving the specified {@code arguments}, returning the
+     *         {@code resultType} and having {@code body} for its implementation.
      */
     public static LambdaExpression<?> lambda(Class<?> resultType,
                                              Expression body,

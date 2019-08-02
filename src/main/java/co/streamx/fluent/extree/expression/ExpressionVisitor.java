@@ -76,7 +76,7 @@ public interface ExpressionVisitor<T> {
      * Visits the {@link BlockExpression}.
      * 
      * @param e {@link BlockExpression} to visit.
-     * @return
+     * @return T
      */
     T visit(BlockExpression e);
 
@@ -84,7 +84,7 @@ public interface ExpressionVisitor<T> {
      * Visits the {@link NewArrayInitExpression}.
      * 
      * @param e {@link NewArrayInitExpression} to visit.
-     * @return
+     * @return T
      */
-    T visit(NewArrayInitExpression newArrayInitExpression);
+    T visit(NewArrayInitExpression e);
 }

@@ -99,6 +99,7 @@ public final class LambdaExpression<F> extends InvocableExpression {
     /**
      * Produces a {@link Function} that represents the expression.
      * 
+     * @param e {@link Expression} to compile
      * @return {@link Function} that represents the expression.
      */
     public static Function<Object[], ?> compile(Expression e) {
