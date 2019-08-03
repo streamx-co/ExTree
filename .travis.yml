@@ -23,3 +23,5 @@ deploy:
   skip_cleanup: true
   on:
     jdk: openjdk8
+    tags: true
+    all_branches: true
