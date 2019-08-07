@@ -76,6 +76,12 @@ public abstract class SimpleExpressionVisitor implements ExpressionVisitor<Expre
 
     @Override
     public Expression visit(ConstantExpression e) {
+        Object value = e.getValue();
+        if (value instanceof Expression) {
+            Object newValue = ((Expression) value).accept(this);
+            if (value != newValue)
+                return Expression.constant(newValue);
+        }
         return e;
     }
 
@@ -95,12 +101,10 @@ public abstract class SimpleExpressionVisitor implements ExpressionVisitor<Expre
         try {
             target = target.accept(this);
             if (visitTargetWithOldArgs) {
-                argumentsStack.push(arguments);
-                cleanArgsStack = true;
                 args = visitArguments(arguments);
             }
 
-            if (args != e.getArguments() || target != e.getTarget()) {
+            if (args != arguments || target != e.getTarget()) {
                 return invoke((InvocableExpression) target, args, e);
             }
             return e;
@@ -132,17 +136,10 @@ public abstract class SimpleExpressionVisitor implements ExpressionVisitor<Expre
 
     @Override
     public Expression visit(DelegateExpression e) {
-        Expression delegate = e.getDelegate().accept(this);
-        Object result = delegate.accept(Interpreter.Instance).apply(argumentsStack.peek().toArray());
-        if (result instanceof ConstantExpression) {
-            Object value = ((ConstantExpression) result).getValue();
-            if (value instanceof Expression)
-                ((Expression) value).accept(this);
-        }
 
         List<ParameterExpression> parameters = visitParameters(e.getParameters());
-        if (delegate != e.getDelegate())
-            return Expression.delegate(e.getResultType(), delegate, parameters);
+        if (parameters != e.getParameters())
+            return Expression.delegate(e.getResultType(), e.getDelegate(), parameters);
 
         return e;
     }
@@ -164,8 +161,11 @@ public abstract class SimpleExpressionVisitor implements ExpressionVisitor<Expre
     @Override
     public Expression visit(MemberExpression e) {
         Expression instance = e.getInstance();
-        if (instance != null)
+        if (instance != null) {
             instance = instance.accept(this);
+            if (instance instanceof LambdaExpression<?>)
+                return instance;
+        }
         List<ParameterExpression> parameters = visitParameters(e.getParameters());
         if (instance != e.getInstance() || parameters != e.getParameters())
             return Expression.member(e.getExpressionType(), instance, e.getMember(), e.getResultType(), parameters);
