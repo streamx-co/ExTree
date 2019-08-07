@@ -1,5 +1,6 @@
 package co.streamx.fluent.extree.expression;
 
+import java.io.Serializable;
 import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.SerializedLambda;
 import java.lang.reflect.Field;
@@ -907,13 +908,18 @@ final class ExpressionMethodVisitor extends MethodVisitor {
                         break;
                     } else {
                         Class<? extends Object> instanceClass = value.getClass();
+
                         if (instanceClass.isSynthetic()) {
-                            e = Expression.invoke(ExpressionClassCracker.get()
-                                    .lambdaFromFileSystem(value,
-                                            instance.getResultType()
-                                                    .getDeclaredMethod(name, getParameterTypes(argsTypes)),
-                                            null),
-                                    arguments);
+                            LambdaExpression<?> inst = (value instanceof Serializable)
+                                    ? ExpressionClassCracker.get().lambda(value, true)
+                                    : ExpressionClassCracker.get()
+                                            .lambdaFromFileSystem(value,
+                                                    instance.getResultType()
+                                                            .getDeclaredMethod(name, getParameterTypes(argsTypes)),
+                                                    null);
+
+                            e = Expression.invoke(inst, arguments);
+
                             break;
                         }
                     }
