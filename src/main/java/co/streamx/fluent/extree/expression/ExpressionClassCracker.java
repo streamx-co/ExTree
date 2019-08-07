@@ -82,19 +82,7 @@ class ExpressionClassCracker {
                 return e;
             List<Integer> paramIndices = this.paramIndices;
             try {
-
-                InvocableExpression target = e.getTarget();
-                Expression expr = null;
-                if (target instanceof MemberExpression)
-                    expr = target.accept(this);
-                List<Expression> args = visitArguments(e.getArguments());
-                if (expr == null)
-                    expr = target.accept(this);
-                if (args != e.getArguments() || expr != e.getTarget()) {
-                    return Expression.invoke((InvocableExpression) expr, args);
-                }
-                return e;
-
+                return super.visit(e);
             } finally {
                 this.paramIndices = paramIndices;
             }
@@ -137,7 +125,7 @@ class ExpressionClassCracker {
                         parsedLambda = ExpressionClassCracker.get().lambda(lambda, method, true);
                     }
                     return Expression.delegate(e.getResultType(), Expression.parameter(LambdaExpression.class, index),
-                            e.getParameters());
+                            visitParameters(e.getParameters()));
                 }
             }
             return super.visit(e);
