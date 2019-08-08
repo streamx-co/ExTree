@@ -163,7 +163,7 @@ class ExpressionClassCracker {
                                        Method lambdaMethod,
                                        boolean synthetic) {
         Class<?> lambdaClass = lambda.getClass();
-        if (!lambdaClass.isSynthetic())
+        if (!isFunctional(lambdaClass))
             throw new IllegalArgumentException("The requested object is not a Java lambda");
 
         if (lambda instanceof Serializable) {
@@ -357,7 +357,7 @@ class ExpressionClassCracker {
             Expression e = arguments.get(i);
             if (e.getExpressionType() == ExpressionType.Constant) {
                 Object value = ((ConstantExpression) e).getValue();
-                if (value != null && value.getClass().isSynthetic()) {
+                if (value != null && isFunctional(value.getClass())) {
                     ParameterReplacer replacer = new ParameterReplacer(i, value);
                     expression = (T) expression.accept(replacer);
                     if (replacer.getParsedLambda() != null) {
@@ -367,6 +367,17 @@ class ExpressionClassCracker {
             }
         }
         return expression;
+    }
+
+    private static boolean isFunctional(Class<?> clazz) {
+        if (clazz.isSynthetic())
+            return true;
+
+        for (Class<?> i : clazz.getInterfaces())
+            if (i.isAnnotationPresent(FunctionalInterface.class))
+                return true;
+
+        return false;
     }
 
     ExpressionClassVisitor parseFromFileSystem(Object lambda,
