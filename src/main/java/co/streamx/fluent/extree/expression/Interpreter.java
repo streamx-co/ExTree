@@ -66,6 +66,21 @@ final class Interpreter implements ExpressionVisitor<Function<Object[], ?>> {
         return pp -> source.test(pp);
     }
 
+    // https://stackoverflow.com/questions/3473756/java-convert-primitive-class/17836370
+    private static final Class<?>[] wrappers = { Integer.class, Double.class, Byte.class, Boolean.class,
+            Character.class, Void.class, Short.class, Float.class, Long.class };
+
+    @SuppressWarnings("unchecked")
+    private static <T> Class<T> wrap(final Class<T> clazz) {
+        if (!clazz.isPrimitive())
+            return clazz;
+        final String name = clazz.getName();
+        final int c0 = name.charAt(0);
+        final int c2 = name.charAt(2);
+        final int mapper = (c0 + c0 + c0 + 5) & (118 - c2);
+        return (Class<T>) wrappers[mapper];
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public Function<Object[], ?> visit(BinaryExpression e) {
@@ -401,7 +416,7 @@ final class Interpreter implements ExpressionVisitor<Function<Object[], ?>> {
                         if (to == Double.TYPE)
                             return (double) (char) source;
                     }
-                    return to.cast(source);
+                    return wrap(to).cast(source);
                 };
 
             return first;
