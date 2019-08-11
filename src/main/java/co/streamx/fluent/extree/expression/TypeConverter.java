@@ -21,7 +21,7 @@ final class TypeConverter extends SimpleExpressionVisitor {
                 Arrays.asList(new Class<?>[] { Short.class, Integer.class, Long.class, Float.class, Double.class }));
         wides.put(Short.class, Arrays.asList(new Class<?>[] { Integer.class, Long.class, Float.class, Double.class }));
 
-		// wides.put(Character.TYPE, Arrays.asList(new Class<?>[] { Integer.TYPE, Long.TYPE, Float.TYPE, Double.TYPE }));
+        wides.put(Character.class, Arrays.asList(new Class<?>[] { String.class, CharSequence.class }));
 
         wides.put(Integer.class, Arrays.asList(new Class<?>[] { Long.class, Float.class, Double.class }));
 
@@ -76,6 +76,9 @@ final class TypeConverter extends SimpleExpressionVisitor {
 			if (value == 1)
 				return Boolean.TRUE;
 		}
+        else if (_to == Character.TYPE) {
+            return (char) value;
+        }
 
 		return defaultConvert(value);
 	}
