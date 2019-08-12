@@ -5,7 +5,7 @@ import java.util.List;
 import lombok.Getter;
 
 @Getter
-public class BlockExpression extends Expression {
+public final class BlockExpression extends Expression {
 
     private final List<Expression> expressions;
 

@@ -22,15 +22,6 @@ public final class ParameterExpression extends Expression {
 		this.index = index;
 	}
 
-	/**
-	 * Gets the index of the parameter or variable.
-	 * 
-	 * @return index of the parameter or variable.
-	 */
-	public int getIndex() {
-		return index;
-	}
-
 	@Override
 	protected <T> T visit(ExpressionVisitor<T> v) {
 		return v.visit(this);
