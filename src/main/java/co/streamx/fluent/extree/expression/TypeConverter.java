@@ -1,6 +1,7 @@
 package co.streamx.fluent.extree.expression;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +53,8 @@ final class TypeConverter extends SimpleExpressionVisitor {
 	}
 
 	static Expression convert(Expression e, Class<?> to) {
+        if (e == null)
+            return Expression.block(to, Collections.emptyList());
 		Class<?> from = e.getResultType();
         if (to.isAssignableFrom(from))
 			return e;
