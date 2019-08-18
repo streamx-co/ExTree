@@ -746,8 +746,13 @@ final class ExpressionMethodVisitor extends MethodVisitor {
     @Override
     public void visitLdcInsn(Object cst) {
         Class<?> type = _primitives.get(cst.getClass());
-        if (type == null)
+        if (type == null) {
             type = cst.getClass();
+            if (type == Type.class) {
+                type = Class.class;
+                cst = _classVisitor.getClass((Type) cst);
+            }
+        }
         _exprStack.push(Expression.constant(cst, type));
     }
 
