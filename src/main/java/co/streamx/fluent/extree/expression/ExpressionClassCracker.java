@@ -17,9 +17,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.Type;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
 
 class ExpressionClassCracker {
 
@@ -187,7 +193,7 @@ class ExpressionClassCracker {
                                              ClassLoader classLoader) {
         ExpressionClassVisitor lambdaVisitor = parseFromFileSystem(lambda, lambdaMethod, classLoader);
 
-        return createLambda(lambdaVisitor);
+        return createLambda(lambdaVisitor, null);
     }
 
     LambdaExpression<?> lambdaFromClassLoader(ClassLoader classLoader,
@@ -195,12 +201,27 @@ class ExpressionClassCracker {
                                               Expression instance,
                                               String method,
                                               String methodDescriptor) {
+
+        SerializedDescriptor desc = new SerializedDescriptor(className, method, methodDescriptor, -1, methodDescriptor);
+        if (instance == null) {
+            LambdaExpression<?> cached = cache.get(desc);
+            if (cached != null)
+                return cached;
+        }
+
         ExpressionClassVisitor lambdaVisitor = parseClass(classLoader, className, instance, method, methodDescriptor);
 
-        return createLambda(lambdaVisitor);
+        LambdaExpression<?> parsed = createLambda(lambdaVisitor, desc);
+        if (desc != null) {
+            LambdaExpression<?> cached = cache.putIfAbsent(desc, parsed);
+            if (cached != null)
+                parsed = cached;
+        }
+        return parsed;
     }
 
-    private LambdaExpression<?> createLambda(ExpressionClassVisitor lambdaVisitor) {
+    private LambdaExpression<?> createLambda(ExpressionClassVisitor lambdaVisitor,
+                                             SerializedDescriptor key) {
         Expression lambdaExpression = lambdaVisitor.getResult();
         Class<?> lambdaType = lambdaVisitor.getType();
         List<ParameterExpression> lambdaParams = Arrays.asList(lambdaVisitor.getParams());
@@ -246,7 +267,7 @@ class ExpressionClassCracker {
         }
 
         Expression actualExpression = TypeConverter.convert(lambdaExpression, lambdaType);
-        return Expression.lambda(lambdaType, actualExpression, lambdaParams, lambdaVisitor.getLocals());
+        return Expression.lambda(lambdaType, actualExpression, lambdaParams, lambdaVisitor.getLocals(), key);
     }
 
     LambdaExpression<?> lambda(SerializedLambda extracted,
@@ -254,9 +275,39 @@ class ExpressionClassCracker {
         return lambda(extracted, lambdaClassLoader, true);
     }
 
+    @Data
+    @EqualsAndHashCode
+    @RequiredArgsConstructor
+    private static class SerializedDescriptor {
+
+        public SerializedDescriptor(SerializedLambda lambda) {
+            this.implClass = lambda.getImplClass();
+            this.implMethodName = lambda.getImplMethodName();
+            this.implMethodSignature = lambda.getImplMethodSignature();
+            this.implMethodKind = lambda.getImplMethodKind();
+            this.instantiatedMethodType = lambda.getInstantiatedMethodType();
+        }
+
+        private final String implClass;
+        private final String implMethodName;
+        private final String implMethodSignature;
+        private final int implMethodKind;
+        private final String instantiatedMethodType;
+    }
+
+    private static final Map<SerializedDescriptor, LambdaExpression<?>> cache = new ConcurrentHashMap<>();
+
     LambdaExpression<?> lambda(SerializedLambda extracted,
                                ClassLoader lambdaClassLoader,
                                boolean synthetic) {
+        int capturedLength = extracted.getCapturedArgCount();
+        SerializedDescriptor desc = new SerializedDescriptor(extracted);
+        if (capturedLength == 0) {
+            LambdaExpression<?> cached = cache.get(desc);
+            if (cached != null)
+                return cached;
+        }
+
         boolean hasThis = extracted.getImplMethodKind() == MethodHandleInfo.REF_invokeInterface
                 || extracted.getImplMethodKind() == MethodHandleInfo.REF_invokeSpecial
                 || extracted.getImplMethodKind() == MethodHandleInfo.REF_invokeVirtual;
@@ -264,7 +315,7 @@ class ExpressionClassCracker {
         Expression instance;
 
         if (hasThis) {
-            if (extracted.getCapturedArgCount() == 0) {
+            if (capturedLength == 0) {
                 try {
                     instance = Expression
                             .parameter(lambdaClassLoader.loadClass(extracted.getImplClass().replace('/', '.')), 0);
@@ -299,7 +350,7 @@ class ExpressionClassCracker {
 
         // in case there is no captured args, we my assume the instantiated method signature to be the most accurate,
         // e.g. handle the case of a parameter for this
-        if (extracted.getCapturedArgCount() == 0) {
+        if (capturedLength == 0) {
 
             Type[] argTypes = Type.getArgumentTypes(extracted.getInstantiatedMethodType());
             params = new ParameterExpression[argTypes.length];
@@ -311,11 +362,16 @@ class ExpressionClassCracker {
         }
 
         LambdaExpression<?> extractedLambda = Expression.lambda(type, reducedExpression,
-                Collections.unmodifiableList(Arrays.asList(params)), actualVisitor.getLocals());
+                Collections.unmodifiableList(Arrays.asList(params)), actualVisitor.getLocals(), desc);
 
-        int capturedLength = extracted.getCapturedArgCount();
-        if (capturedLength == 0 || (hasThis && capturedLength <= 1))
+        if (capturedLength == 0 || (hasThis && capturedLength <= 1)) {
+            if (desc != null) {
+                LambdaExpression<?> cached = cache.putIfAbsent(desc, extractedLambda);
+                if (cached != null)
+                    extractedLambda = cached;
+            }
             return extractedLambda;
+        }
 
         List<Expression> args = new ArrayList<>(params.length);
 
@@ -346,7 +402,7 @@ class ExpressionClassCracker {
         InvocationExpression newTarget = Expression.invoke(extractedLambda, args);
 
         return Expression.lambda(actualVisitor.getType(), newTarget, Collections.unmodifiableList(finalParams),
-                Collections.emptyList());
+                Collections.emptyList(), desc);
     }
 
     @SuppressWarnings("unchecked")

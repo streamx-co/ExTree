@@ -606,7 +606,7 @@ public class LambdaExpressionTest implements Serializable {
         LambdaExpression<Function<Integer, Integer>> parsed = LambdaExpression.parse(e);
 
         LambdaExpression<?> lambda = Expression.lambda(Integer.class, parsed, Collections.emptyList(),
-                Collections.emptyList());
+                Collections.emptyList(), null);
 
         Function<Object[], Function<Object[], ?>> compiled = (Function<Object[], Function<Object[], ?>>) lambda
                 .compile();

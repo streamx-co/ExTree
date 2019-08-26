@@ -843,7 +843,7 @@ final class ExpressionMethodVisitor extends MethodVisitor {
         }
 
         LambdaExpression<?> partial = Expression.lambda(lambda.getResultType(), lambda, params,
-                Collections.emptyList());
+                Collections.emptyList(), null);
 
         InvocationExpression e = Expression.invoke(partial, arguments);
 

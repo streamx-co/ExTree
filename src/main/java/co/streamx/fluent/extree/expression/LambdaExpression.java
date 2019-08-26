@@ -24,12 +24,13 @@ public final class LambdaExpression<F> extends InvocableExpression {
 
     private final Expression body;
     private final List<Expression> locals;
+    private final Object key;
 
     // private static final Map<Class<?>, WeakReference<LambdaExpression<?>>> _cache = Collections
     // .synchronizedMap(new WeakHashMap<Class<?>, WeakReference<LambdaExpression<?>>>());
 
     LambdaExpression(Class<?> resultType, @NonNull Expression body, List<ParameterExpression> params,
-            @NonNull List<Expression> locals) {
+            @NonNull List<Expression> locals, Object key) {
         super(ExpressionType.Lambda, resultType, params);
 
         if (!TypeConverter.isAssignable(resultType, body.getResultType()))
@@ -37,6 +38,7 @@ public final class LambdaExpression<F> extends InvocableExpression {
 
         this.body = body;
         this.locals = locals;
+        this.key = key;
     }
 
     /**

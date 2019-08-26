@@ -796,8 +796,9 @@ public abstract class Expression {
     public static LambdaExpression<?> lambda(Class<?> resultType,
                                              Expression body,
                                              List<ParameterExpression> parameters,
-                                             List<Expression> locals) {
-        return new LambdaExpression<Object>(resultType, body, parameters, locals);
+                                             List<Expression> locals,
+                                             Object key) {
+        return new LambdaExpression<Object>(resultType, body, parameters, locals, key);
     }
 
     /**

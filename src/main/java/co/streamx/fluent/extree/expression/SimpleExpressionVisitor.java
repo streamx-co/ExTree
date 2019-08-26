@@ -129,7 +129,7 @@ public abstract class SimpleExpressionVisitor implements ExpressionVisitor<Expre
         Expression body = e.getBody().accept(this);
 
         if (body != e.getBody() || parameters != e.getParameters() || locals != e.getLocals())
-            return Expression.lambda(e.getResultType(), body, parameters, locals);
+            return Expression.lambda(e.getResultType(), body, parameters, locals, e.getKey());
 
         return e;
     }
