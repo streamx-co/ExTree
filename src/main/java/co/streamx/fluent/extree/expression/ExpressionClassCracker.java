@@ -205,8 +205,10 @@ class ExpressionClassCracker {
         SerializedDescriptor desc = new SerializedDescriptor(className, method, methodDescriptor, -1, methodDescriptor);
         if (instance == null) {
             LambdaExpression<?> cached = cache.get(desc);
-            if (cached != null)
+            if (cached != null) {
+//                System.out.println("Cache hit #2: " + cached);
                 return cached;
+            }
         }
 
         ExpressionClassVisitor lambdaVisitor = parseClass(classLoader, className, instance, method, methodDescriptor);
@@ -304,8 +306,10 @@ class ExpressionClassCracker {
         SerializedDescriptor desc = new SerializedDescriptor(extracted);
         if (capturedLength == 0) {
             LambdaExpression<?> cached = cache.get(desc);
-            if (cached != null)
+            if (cached != null) {
+//                System.out.println("Cache hit #1: " + cached);
                 return cached;
+            }
         }
 
         boolean hasThis = extracted.getImplMethodKind() == MethodHandleInfo.REF_invokeInterface
