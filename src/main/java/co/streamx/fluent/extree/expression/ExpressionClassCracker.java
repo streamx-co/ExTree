@@ -203,7 +203,8 @@ class ExpressionClassCracker {
                                               String methodDescriptor) {
 
         SerializedDescriptor desc = new SerializedDescriptor(className, method, methodDescriptor, -1, methodDescriptor);
-        if (instance == null) {
+        boolean isCacheable = instance == null || instance.getResultType().isSynthetic();
+        if (isCacheable) {
             LambdaExpression<?> cached = cache.get(desc);
             if (cached != null) {
 //                System.out.println("Cache hit #2: " + cached);
@@ -214,11 +215,13 @@ class ExpressionClassCracker {
         ExpressionClassVisitor lambdaVisitor = parseClass(classLoader, className, instance, method, methodDescriptor);
 
         LambdaExpression<?> parsed = createLambda(lambdaVisitor, desc);
-        if (desc != null) {
+
+        if (isCacheable) {
             LambdaExpression<?> cached = cache.putIfAbsent(desc, parsed);
             if (cached != null)
                 parsed = cached;
         }
+
         return parsed;
     }
 
@@ -290,6 +293,10 @@ class ExpressionClassCracker {
             this.instantiatedMethodType = lambda.getInstantiatedMethodType();
         }
 
+        public SerializedDescriptor withImplClass(String implClass) {
+            return new SerializedDescriptor(implClass, implClass, implClass, implMethodKind, implClass);
+        }
+
         private final String implClass;
         private final String implMethodName;
         private final String implMethodSignature;
@@ -304,13 +311,6 @@ class ExpressionClassCracker {
                                boolean synthetic) {
         int capturedLength = extracted.getCapturedArgCount();
         SerializedDescriptor desc = new SerializedDescriptor(extracted);
-        if (capturedLength == 0) {
-            LambdaExpression<?> cached = cache.get(desc);
-            if (cached != null) {
-//                System.out.println("Cache hit #1: " + cached);
-                return cached;
-            }
-        }
 
         boolean hasThis = extracted.getImplMethodKind() == MethodHandleInfo.REF_invokeInterface
                 || extracted.getImplMethodKind() == MethodHandleInfo.REF_invokeSpecial
@@ -327,16 +327,29 @@ class ExpressionClassCracker {
                     throw new RuntimeException(e);
                 }
             } else {
-                instance = Expression.constant(extracted.getCapturedArg(0));
+                Object arg0 = extracted.getCapturedArg(0);
+                if (desc != null)
+                    desc = desc.withImplClass(arg0.getClass().getName());
+                instance = Expression.constant(arg0);
             }
         } else {
             instance = null;
         }
 
+        boolean noNeedHandleCapturedArgs = capturedLength == 0 || (hasThis && capturedLength <= 1);
+        boolean isCacheable = noNeedHandleCapturedArgs && (!hasThis || instance.getResultType().isSynthetic());
+        if (isCacheable) {
+            LambdaExpression<?> cached = cache.get(desc);
+            if (cached != null) {
+//                System.out.println("Cache hit #1: " + cached);
+                return cached;
+            }
+        }
+
         ExpressionClassVisitor actualVisitor = parseClass(lambdaClassLoader, extracted.getImplClass(), 
                 instance, extracted.getImplMethodName(), extracted.getImplMethodSignature(), synthetic);
 
-        Class<?> type = actualVisitor.getType();
+        final Class<?> type = actualVisitor.getType();
         Expression reducedExpression = type == Void.TYPE ? null
                 : TypeConverter.convert(actualVisitor.getResult(), type);
 
@@ -368,8 +381,8 @@ class ExpressionClassCracker {
         LambdaExpression<?> extractedLambda = Expression.lambda(type, reducedExpression,
                 Collections.unmodifiableList(Arrays.asList(params)), actualVisitor.getLocals(), desc);
 
-        if (capturedLength == 0 || (hasThis && capturedLength <= 1)) {
-            if (desc != null) {
+        if (noNeedHandleCapturedArgs) {
+            if (isCacheable) {
                 LambdaExpression<?> cached = cache.putIfAbsent(desc, extractedLambda);
                 if (cached != null)
                     extractedLambda = cached;
@@ -403,9 +416,13 @@ class ExpressionClassCracker {
             finalParams.add(arg);
         }
 
+//        cached = cache.putIfAbsent(desc, extractedLambda);
+//        if (cached != null)
+//            extractedLambda = cached;
+
         InvocationExpression newTarget = Expression.invoke(extractedLambda, args);
 
-        return Expression.lambda(actualVisitor.getType(), newTarget, Collections.unmodifiableList(finalParams),
+        return Expression.lambda(type, newTarget, Collections.unmodifiableList(finalParams),
                 Collections.emptyList(), desc);
     }
 
