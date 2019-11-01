@@ -98,6 +98,16 @@ public abstract class Expression {
         return isBoolean(getResultType());
     }
 
+    private boolean isIntBooleanTrue() {
+        return getResultType() == Integer.TYPE && getExpressionType() == ExpressionType.Constant
+                && (int) ((ConstantExpression) this).getValue() == 1;
+    }
+
+    private boolean isIntBooleanFalse() {
+        return getResultType() == Integer.TYPE && getExpressionType() == ExpressionType.Constant
+                && (int) ((ConstantExpression) this).getValue() == 0;
+    }
+
     private static boolean isBoolean(Class<?> type) {
         return type == Boolean.TYPE || type == Boolean.class;
     }
@@ -1181,6 +1191,9 @@ public abstract class Expression {
                 return convert((Boolean) cfirst.getValue() ? test : Expression.logicalNot(test),
                         ifTrue.getResultType());
             }
+        } else {
+            if (ifTrue.isIntBooleanTrue() && ifFalse.isIntBooleanFalse())
+                return test;
         }
 
         return new BinaryExpression(ExpressionType.Conditional, ifTrue.getResultType(), test, ifTrue, ifFalse);
