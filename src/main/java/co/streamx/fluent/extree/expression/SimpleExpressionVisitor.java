@@ -21,6 +21,14 @@ public abstract class SimpleExpressionVisitor implements ExpressionVisitor<Expre
         return argumentsStack.peek();
     }
 
+    protected List<Expression> popContextArguments() {
+        return argumentsStack.pop();
+    }
+
+    protected void pushContextArguments(List<Expression> args) {
+        argumentsStack.push(args);
+    }
+
     protected <T extends Expression> List<T> visitExpressionList(List<T> original) {
         if (original != null) {
             List<T> list = null;
