@@ -16,6 +16,8 @@ jdk:
   - openjdk11
   - openjdk12
   - openjdk13
+  
+after_success: "coveralls"
 
 deploy:
   provider: script
