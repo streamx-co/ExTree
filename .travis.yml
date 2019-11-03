@@ -1,5 +1,5 @@
 # Only build tags
-# if: tag IS present
+if: tag IS present
 
 language: java
 
@@ -17,7 +17,7 @@ jdk:
   - openjdk12
   - openjdk13
   
-after_success: "coveralls"
+#after_success: "coveralls"
 
 deploy:
   provider: script
