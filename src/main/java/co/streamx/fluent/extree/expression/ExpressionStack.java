@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.objectweb.asm.Label;
-
 /**
  * 
  */
@@ -99,7 +97,7 @@ final class ExpressionStack extends ArrayList<Expression> {
 		private final ExpressionStack _false;
 		private final ExpressionStack _parent;
 
-		BranchExpression(ExpressionStack parent, Expression test, Label label) {
+        BranchExpression(ExpressionStack parent, Expression test) {
 			this(parent, test, null, null);
 		}
 

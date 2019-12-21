@@ -101,7 +101,7 @@ final class ExpressionMethodVisitor extends MethodVisitor {
                         Expression test) {
         List<ExpressionStack> bl = getBranchUsers(label);
 
-        ExpressionStack.BranchExpression br = new ExpressionStack.BranchExpression(_exprStack, test, label);
+        ExpressionStack.BranchExpression br = new ExpressionStack.BranchExpression(_exprStack, test);
         _exprStack.push(br);
 
         ExpressionStack left = br.getFalse();

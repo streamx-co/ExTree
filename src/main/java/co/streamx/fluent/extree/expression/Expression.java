@@ -1188,8 +1188,7 @@ public abstract class Expression {
                 if (cfirst.getValue().equals(csecond.getValue()))
                     return ifTrue;
 
-                return convert((Boolean) cfirst.getValue() ? test : Expression.logicalNot(test),
-                        ifTrue.getResultType());
+                return convert((Boolean) cfirst.getValue() ? test : logicalNot(test), ifTrue.getResultType());
             }
         } else {
             if (ifTrue.isIntBooleanTrue() && ifFalse.isIntBooleanFalse())
