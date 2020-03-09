@@ -69,7 +69,7 @@ final class ExpressionMethodVisitor extends MethodVisitor {
     }
 
     ExpressionMethodVisitor(ExpressionClassVisitor classVisitor, Expression me, Class<?>[] argTypes) {
-        super(Opcodes.ASM5);
+        super(Opcodes.ASM7);
         _classVisitor = classVisitor;
         _me = me;
         _argTypes = argTypes;
