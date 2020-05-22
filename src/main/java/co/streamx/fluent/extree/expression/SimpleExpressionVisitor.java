@@ -1,10 +1,8 @@
 package co.streamx.fluent.extree.expression;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.List;
 
 /**
@@ -15,18 +13,30 @@ import java.util.List;
 
 public abstract class SimpleExpressionVisitor implements ExpressionVisitor<Expression> {
 
-    private Deque<List<Expression>> argumentsStack = new ArrayDeque<>();
+    private final List<List<Expression>> argumentsStack = new ArrayList<>();
 
     protected List<Expression> getContextArguments() {
-        return argumentsStack.peek();
+        return argumentsStack.isEmpty() ? null : argumentsStack.get(argumentsStack.size() - 1);
     }
 
     protected List<Expression> popContextArguments() {
-        return argumentsStack.pop();
+        return argumentsStack.remove(argumentsStack.size() - 1);
+    }
+
+    protected Expression resolveContextParameter(ParameterExpression p) {
+        return resolveContextParameter(p, argumentsStack.size() - 1);
+    }
+
+    private Expression resolveContextParameter(ParameterExpression p,
+                                               int frame) {
+        Expression e = argumentsStack.get(frame).get(p.getIndex());
+        if (e instanceof ParameterExpression)
+            return frame == 0 ? e : resolveContextParameter((ParameterExpression) e, frame - 1);
+        return e;
     }
 
     protected void pushContextArguments(List<Expression> args) {
-        argumentsStack.push(args);
+        argumentsStack.add(args);
     }
 
     protected <T extends Expression> List<T> visitExpressionList(List<T> original) {
@@ -97,14 +107,15 @@ public abstract class SimpleExpressionVisitor implements ExpressionVisitor<Expre
     public Expression visit(InvocationExpression e) {
         List<Expression> arguments = e.getArguments();
         Expression target = e.getTarget();
-        boolean visitTargetWithOldArgs = target.getExpressionType() == ExpressionType.MethodAccess
-                || target.getExpressionType() == ExpressionType.Delegate;
+        boolean visitTargetWithOldArgs = /*
+                                          * target.getExpressionType() == ExpressionType.MethodAccess ||
+                                          */ target.getExpressionType() == ExpressionType.Delegate;
         boolean cleanArgsStack = false;
         List<Expression> args = arguments;
         if (!visitTargetWithOldArgs) {
-            argumentsStack.push(arguments);
-            cleanArgsStack = true;
             args = visitArguments(arguments);
+            pushContextArguments(arguments);
+            cleanArgsStack = true;
         }
         try {
             target = target.accept(this);
@@ -118,7 +129,7 @@ public abstract class SimpleExpressionVisitor implements ExpressionVisitor<Expre
             return e;
         } finally {
             if (cleanArgsStack)
-                argumentsStack.pop();
+                popContextArguments();
         }
     }
 
@@ -170,7 +181,12 @@ public abstract class SimpleExpressionVisitor implements ExpressionVisitor<Expre
     public Expression visit(MemberExpression e) {
         Expression instance = e.getInstance();
         if (instance != null) {
-            instance = instance.accept(this);
+            List<Expression> contextArguments = popContextArguments();
+            try {
+                instance = instance.accept(this);
+            } finally {
+                pushContextArguments(contextArguments);
+            }
             if (instance instanceof LambdaExpression<?>)
                 return instance;
         }

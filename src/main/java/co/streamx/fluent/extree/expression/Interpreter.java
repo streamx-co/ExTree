@@ -31,6 +31,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Member;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -302,7 +303,7 @@ final class Interpreter implements ExpressionVisitor<Function<Object[], ?>> {
     public Function<Object[], ?> visit(MemberExpression e) {
         final Member m = e.getMember();
 
-        if (m instanceof AccessibleObject) {
+        if (!Modifier.isPublic(m.getModifiers()) && m instanceof AccessibleObject) {
             AccessibleObject ao = (AccessibleObject) m;
             try {
                 if (!ao.isAccessible())

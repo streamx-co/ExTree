@@ -72,6 +72,7 @@ class ExpressionClassCracker {
         private List<Integer> paramIndices;
         private final Object lambda;
         private LambdaExpression<?> parsedLambda;
+        private List<Integer> prevParamIndices;
 
         public ParameterReplacer(int paramIndex, Object lambda) {
             this.paramIndices = Arrays.asList(paramIndex);
@@ -86,11 +87,11 @@ class ExpressionClassCracker {
         public Expression visit(InvocationExpression e) {
             if (this.paramIndices.isEmpty())
                 return e;
-            List<Integer> paramIndices = this.paramIndices;
+            prevParamIndices = this.paramIndices;
             try {
                 return super.visit(e);
             } finally {
-                this.paramIndices = paramIndices;
+                this.paramIndices = prevParamIndices;
             }
         }
 
@@ -119,7 +120,7 @@ class ExpressionClassCracker {
             Expression instance = e.getInstance();
             if (instance != null && instance.getExpressionType() == ExpressionType.Parameter) {
                 int index = ((ParameterExpression) instance).getIndex();
-                if (paramIndices.contains(index)) {
+                if (prevParamIndices.contains(index)) {
                     if (lambda != null && parsedLambda == null) {
                         Method method = (Method) e.getMember();
                         try {
