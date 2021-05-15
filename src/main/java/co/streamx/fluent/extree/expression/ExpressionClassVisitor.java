@@ -67,7 +67,7 @@ final class ExpressionClassVisitor extends ClassVisitor {
 
     public ExpressionClassVisitor(ClassLoader loader, Expression instance, String method,
             String methodDescriptor, boolean synthetic) {
-        super(Opcodes.ASM7);
+        super(Opcodes.ASM9);
         _loader = loader;
         _me = instance;
         _method = method;
