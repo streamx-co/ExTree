@@ -20,7 +20,7 @@ public abstract class SimpleExpressionVisitor implements ExpressionVisitor<Expre
     }
 
     protected List<Expression> popContextArguments() {
-        return argumentsStack.remove(argumentsStack.size() - 1);
+        return argumentsStack.isEmpty() ? null : argumentsStack.remove(argumentsStack.size() - 1);
     }
 
     protected Expression resolveContextParameter(ParameterExpression p) {
@@ -185,7 +185,8 @@ public abstract class SimpleExpressionVisitor implements ExpressionVisitor<Expre
             try {
                 instance = instance.accept(this);
             } finally {
-                pushContextArguments(contextArguments);
+                if (contextArguments != null)
+                    pushContextArguments(contextArguments);
             }
             if (instance instanceof LambdaExpression<?>)
                 return instance;

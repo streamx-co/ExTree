@@ -2,7 +2,9 @@ package co.streamx.fluent.extree.expression;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.function.Function;
 
 import org.junit.Test;
 
@@ -53,4 +55,13 @@ public class InvocationExpressionTest {
                       int b) {
         return a + b;
     }
+
+    static class Entity { public int id; }
+
+	@Test
+	public void testIssue2() throws Exception {
+		Function<Entity, Integer> lambda = (Serializable & Function<Entity, Integer>) e -> e.id;
+		SimpleExpressionVisitor visitor = new SimpleExpressionVisitor(){ };
+		LambdaExpression.parse(lambda).accept(visitor);
+	}
 }
