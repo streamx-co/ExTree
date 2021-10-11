@@ -13,6 +13,7 @@ jdk:
   - oraclejdk14
   - oraclejdk15
   - oraclejdk16
+  - oraclejdk17
   - openjdk8
   - openjdk9
   - openjdk10
@@ -22,6 +23,7 @@ jdk:
   - openjdk14
   - openjdk15
   - openjdk16
+  - openjdk17
   
 #after_success: "coveralls"
 
