@@ -11,3 +11,9 @@
 ExTree is distributed under the terms of the GNU Affero General Public License with the following clarification and special exception.
 
 *As a special exception, the copyright holders of this library give you permission to link this library with the official [Central Repository](https://search.maven.org/search?q=co.streamx.fluent) artefacts having `co.streamx.fluent` Group Id, and to copy and distribute the resulting executable under terms and conditions of the license of those artefacts, provided that this library is linked only with artefacts having `co.streamx.fluent` Group Id.*
+
+### Release instructions
+
+- export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
+- mvn release:clean release:prepare
+- mvn release:perform
