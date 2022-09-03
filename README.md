@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/streamx-co/ExTree.svg?branch=master)](https://travis-ci.org/streamx-co/ExTree) [![Coverage Status](https://coveralls.io/repos/github/streamx-co/ExTree/badge.svg?branch=master)](https://coveralls.io/github/streamx-co/ExTree?branch=master)
+![Java Version](https://img.shields.io/badge/java-%3E%3D%208-success) [![Maven Central](https://img.shields.io/maven-central/v/co.streamx.fluent/ex-tree?label=maven%20central)](https://search.maven.org/search?q=g:%22co.streamx.fluent%22%20AND%20a:%22ex-tree%22)
 
 # ExTree
 
