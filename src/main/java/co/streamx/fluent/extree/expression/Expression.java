@@ -1009,13 +1009,13 @@ public abstract class Expression {
      *         method equal to Invoke.
      */
     public static InvocationExpression invoke(InvocableExpression method,
-                                              List<Expression> arguments) {
-        arguments = new ArrayList<>(arguments);
-        method = ExpressionClassCracker.get().parseSyntheticArguments(method, arguments);
-        return new InvocationExpression(method, arguments);
+                                              List<? extends Expression> arguments) {
+        List<Expression> args = new ArrayList<>(arguments);
+        method = ExpressionClassCracker.get().parseSyntheticArguments(method, args);
+        return new InvocationExpression(method, args);
     }
 
-    private static List<ParameterExpression> getParameters(Member member) {
+    static List<ParameterExpression> getParameters(Member member) {
 
         Class<?>[] params;
         if (member instanceof Constructor<?>) {

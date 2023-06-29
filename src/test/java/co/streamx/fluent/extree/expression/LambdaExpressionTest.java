@@ -15,6 +15,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
+import lombok.val;
 import org.danekja.java.util.function.serializable.SerializableBiFunction;
 import org.danekja.java.util.function.serializable.SerializableFunction;
 import org.danekja.java.util.function.serializable.SerializablePredicate;
@@ -373,6 +374,63 @@ public class LambdaExpressionTest implements Serializable {
         p.setHeight(200);
         delegate = compiled.apply(new Object[] { p });
         assertEquals(getFunction(p).apply(p), delegate.apply(new Object[] { p }));
+    }
+
+    @Test
+    public void testMethodRef3() throws Throwable {
+        Person p = new Person();
+        p.setAge(1);
+        LambdaExpression<Supplier<Integer>> parsed = LambdaExpression.parseMethod(p::getAge);
+        Function<Object[], ?> compiled = parsed.compile();
+
+//        Object delegate = compiled.apply(new Object[]{});
+        assertEquals(p.getAge(), compiled.apply(new Object[] { }));
+
+//        p.setHeight(200);
+//        delegate = compiled.apply(new Object[] { p });
+//        assertEquals(getFunction(p).apply(p), delegate.apply(new Object[] { p }));
+    }
+
+    @Test
+    public void testMethodRef4() throws Throwable {
+
+        SerializableFunction<Person, Integer> pp = p -> p.getParent().getHeight();
+
+        val parsed = LambdaExpression.parseMethod(pp);
+        Function<Object[], ?> compiled = parsed.compile();
+
+        Person person = new Person();
+        person.setParent(new Person());
+        assertEquals(pp.apply(person), compiled.apply(new Object[] {person}));
+    }
+
+    @Test
+    public void testMethodRef41() throws Throwable {
+
+        Runnable r = () -> {
+            SerializableFunction<Person, Integer> pp = p -> p.getParent().getHeight();
+            Person person = new Person();
+            person.setParent(new Person());
+            System.out.println("Hello:" + pp.apply(person));
+        };
+
+
+
+        val parsed = LambdaExpression.parseMethod(r);
+        System.out.println(parsed);
+        r.run();
+    }
+
+    @Test
+    public void testMethodRef5() throws Throwable {
+        Person p = new Person();
+        p.setParent(new Person());
+        p.getParent().setAge(1);
+        Supplier<Integer> supplier = () -> p.getParent().getAge();
+        val parsed = LambdaExpression.parseMethod(supplier);
+        Function<Object[], ?> compiled = parsed.compile();
+
+        assertEquals(supplier.get(), compiled.apply(new Object[] { }));
     }
 
     @Test(expected = NullPointerException.class)
@@ -763,10 +821,16 @@ public class LambdaExpressionTest implements Serializable {
         assertEquals(pp.test(14), le.apply(new Object[] { 14 }));
     }
 
-    // @Test
-    // public void testGetExpressionType() {
-    // fail("Not yet implemented");
-    // }
+     @Test
+     public void testGetExpressionType() {
+
+         Supplier<Long> currentTimeMillis = System::currentTimeMillis;
+
+         LambdaExpression<Supplier<Long>> parsed = LambdaExpression.parse(currentTimeMillis);
+
+         System.out.println(parsed.compile().apply(new Object[0]));
+
+     }
 
     // @Test
     // public void testGetResultType() {
