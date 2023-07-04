@@ -149,8 +149,8 @@ final class ExpressionClassVisitor extends ClassVisitor {
 
                 } else {
                     if (_me != null) {
-                        parameterBase = 0;
                         instance = _me;
+                        parameterBase = _me instanceof ParameterExpression ? 1 : 0;
                     } else {
                         parameterBase = 1;
                         instance = Expression.parameter(implClass, 0);
