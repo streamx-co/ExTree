@@ -16,10 +16,7 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import lombok.val;
-import org.danekja.java.util.function.serializable.SerializableBiFunction;
-import org.danekja.java.util.function.serializable.SerializableFunction;
-import org.danekja.java.util.function.serializable.SerializablePredicate;
-import org.danekja.java.util.function.serializable.SerializableSupplier;
+import org.danekja.java.util.function.serializable.*;
 import org.junit.Test;
 
 import co.streamx.fluent.extree.Customer;
@@ -328,6 +325,17 @@ public class LambdaExpressionTest implements Serializable {
         assertEquals(pp.apply(-18), le.apply(new Object[] { -18 }));
         assertEquals(pp.apply(144567), le.apply(new Object[] { 144567 }));
         assertEquals(pp.apply(-144567), le.apply(new Object[] { -144567 }));
+    }
+
+    @Test
+    public void testMethodRefInstance() throws Throwable {
+        SerializableBiPredicate<Person, Person> pp = Object::equals;
+        LambdaExpression<?> parsed = LambdaExpression.parse(pp);
+        Function<Object[], ?> compiled = parsed.compile();
+        Person person = new Person();
+        person.setName("John");
+        assertEquals(pp.test(person,person), compiled.apply(new Object[] {person, person}));
+        assertEquals(pp.test(person, new Person()), compiled.apply(new Object[] {person, new Person()}));
     }
 
     @Test
