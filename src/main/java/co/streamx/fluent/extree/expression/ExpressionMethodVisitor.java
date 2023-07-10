@@ -810,50 +810,58 @@ final class ExpressionMethodVisitor extends MethodVisitor {
             throw new UnsupportedOperationException("Unsupported bootstrapMethodHandle: " + bootstrapMethodHandle);
         }
 
-        Handle handle = (Handle) bootstrapMethodArguments[1];
-        Type objectType = Type.getObjectType(handle.getOwner());
-        Class<?> containingClass = _classVisitor.getClass(objectType);
+        val handle = (Handle) bootstrapMethodArguments[1];
+        val internalName = handle.getOwner();
+        val objectType = Type.getObjectType(internalName);
+        val containingClass = _classVisitor.getClass(objectType);
 
         val hasThis = handle.getTag() == Opcodes.H_INVOKEINTERFACE || handle.getTag() == Opcodes.H_INVOKESPECIAL
                 || handle.getTag() == Opcodes.H_INVOKEVIRTUAL;
 
-        Type bootstrapMethodArgument = (Type) bootstrapMethodArguments[2];
-
         Expression optionalThis = hasThis ? Expression.parameter(containingClass, 0) : null;
-        val targetParameterTypes = getParameterTypes(Type.getArgumentTypes(handle.getDesc()));
-        val method = containingClass.getDeclaredMethod(handle.getName(), targetParameterTypes);
+        val methodDescriptor = handle.getDesc();
+        val targetParameterTypes = getParameterTypes(Type.getArgumentTypes(methodDescriptor));
+        val methodName = handle.getName();
+        val method = containingClass.getDeclaredMethod(methodName, targetParameterTypes);
 
-        InvocableExpression lambda;
+        var params = Expression.getParameters(method);
+        val member = Expression.member(ExpressionType.MethodAccess, optionalThis, method,
+                method.getReturnType(), params);
 
-        if (method.isSynthetic()) {
-            lambda = ExpressionClassCracker.get()
-                    .lambdaFromClassLoader(_classVisitor.getLoader(), objectType.getInternalName(), optionalThis,
-                            handle.getName(),
-                            handle.getDesc());
-        } else {
-            val parameterTypes = getParameterTypes(bootstrapMethodArgument.getArgumentTypes());
-            val member = Expression.member(ExpressionType.MethodAccess, optionalThis, method,
-                    method.getReturnType(), Expression.getParameters(method));
-            List<ParameterExpression> params = new ArrayList<>(parameterTypes.length);
-            for (int i = 0; i < parameterTypes.length; i++) {
-                params.add(Expression.parameter(parameterTypes[i], i));
+           /* if (!hasThis && argsTypes.length == 0) {
+                _exprStack.push(member);
+                return;
+            }*/
+
+        if (hasThis) {
+            params = new ArrayList<>(targetParameterTypes.length);
+            for (int i = 0; i < targetParameterTypes.length; i++) {
+                params.add(Expression.parameter(targetParameterTypes[i], i + 1));
             }
-            val call = Expression.invoke(member, hasThis ? params.subList(1, params.size()) : params);
-            lambda = Expression.lambda(call.getResultType(), call, params, Collections.emptyList(), null);
         }
 
-        val argsTypes = Type.getArgumentTypes(descriptor);
+        val call = Expression.invoke(member, params);
+        if (hasThis) {
+            params.add(0, (ParameterExpression) optionalThis);
+        }
+        val methodLoader = _classVisitor.getLoader();
+        val lambda = Expression.lambda(call.getResultType(), call, params, Collections.emptyList(), null,
+                method.isSynthetic() ? () -> ExpressionClassCracker.get()
+                        .lambdaFromClassLoader(methodLoader, internalName, optionalThis,
+                                methodName,
+                                methodDescriptor) : null);
 
+        val argsTypes = Type.getArgumentTypes(descriptor);
         if (argsTypes.length == 0) {
             _exprStack.push(lambda);
             return;
         }
 
-        var arguments = createArguments(argsTypes);
+        val arguments = createArguments(argsTypes);
 
         Class<?>[] parameterTypes = getParameterTypes(argsTypes);
         convertArguments(arguments, parameterTypes);
-        List<ParameterExpression> params = new ArrayList<>(parameterTypes.length);
+        params = new ArrayList<>(parameterTypes.length);
         for (int i = 0; i < parameterTypes.length; i++) {
             params.add(Expression.parameter(parameterTypes[i], i));
         }

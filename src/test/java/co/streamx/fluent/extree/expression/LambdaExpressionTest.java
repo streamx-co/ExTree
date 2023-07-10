@@ -16,6 +16,7 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import lombok.val;
+import lombok.var;
 import org.danekja.java.util.function.serializable.*;
 import org.junit.Test;
 
@@ -715,15 +716,23 @@ public class LambdaExpressionTest implements Serializable {
                                                                                                   + f.floatValue() + 3
                                                                                                   - getSomething() + m;
 
-        LambdaExpression<Function<Short, BiFunction<Float, Character, Function<Integer, Float>>>> parsed = LambdaExpression
-                .parse(e);
+        var parsed = LambdaExpression.parse(e);
 
-        Function<Object[], Function<Object[], Function<Object[], ?>>> compiled = (Function<Object[], Function<Object[], Function<Object[], ?>>>) parsed
-                .compile();
+        val syntheticRemover = new SimpleExpressionVisitor() {
+            @Override
+            public Expression visit(LambdaExpression<?> e) {
+                return super.visit(e.parseMethodRef());
+            }
+        };
 
-        Function<Object[], Function<Object[], ?>> a1 = compiled.apply(new Object[] { (short) 23 });
-        Function<Object[], ?> a2 = a1.apply(new Object[] { 1.2f, 'g' });
-        Object a3 = a2.apply(new Object[] { 153 });
+
+        parsed = (LambdaExpression<Function<Short, BiFunction<Float, Character, Function<Integer, Float>>>>) parsed.accept(syntheticRemover);
+
+        val compiled = (Function<Object[], Function<Object[], Function<Object[], ?>>>) parsed.compile();
+
+        val a1 = compiled.apply(new Object[] { (short) 23 });
+        val a2 = a1.apply(new Object[] { 1.2f, 'g' });
+        val a3 = a2.apply(new Object[] { 153 });
 
         assertEquals(e.apply((short) 23).apply(1.2f, 'g').apply(153), a3);
     }

@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Supplier;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -808,7 +809,16 @@ public abstract class Expression {
                                              List<ParameterExpression> parameters,
                                              List<Expression> locals,
                                              Object key) {
-        return new LambdaExpression<Object>(resultType, body, parameters, locals, key);
+        return new LambdaExpression<Object>(resultType, body, parameters, locals, key, null);
+    }
+
+    static <T> LambdaExpression<T> lambda(Class<?> resultType,
+                                      Expression body,
+                                      List<ParameterExpression> parameters,
+                                      List<Expression> locals,
+                                      Object key,
+                                      Supplier<LambdaExpression<T>> parser) {
+        return new LambdaExpression<T>(resultType, body, parameters, locals, key, parser);
     }
 
     /**
