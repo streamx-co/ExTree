@@ -525,12 +525,10 @@ class ExpressionClassCracker {
         String classFilePath = classFilePath(className);
         ExpressionClassVisitor visitor = new ExpressionClassVisitor(classLoader, instance, method, methodDescriptor,
                 synthetic);
-        try {
-            try (InputStream classStream = getResourceAsStream(classLoader, classFilePath)) {
-                ClassReader reader = new ClassReader(classStream);
-                reader.accept(visitor, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-                return visitor;
-            }
+        try (InputStream classStream = getResourceAsStream(classLoader, classFilePath)) {
+            ClassReader reader = new ClassReader(classStream);
+            reader.accept(visitor, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+            return visitor;
         } catch (IOException e) {
             throw new RuntimeException("error parsing class file " + classFilePath, e);
         }
