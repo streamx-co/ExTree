@@ -54,7 +54,7 @@ final class ExpressionMethodVisitor extends MethodVisitor {
     private final Expression _me;
 
     static {
-        Map<Class<?>, Class<?>> primitives = new HashMap<Class<?>, Class<?>>(8);
+        Map<Class<?>, Class<?>> primitives = new HashMap<Class<?>, Class<?>>();
         primitives.put(Boolean.class, Boolean.TYPE);
         primitives.put(Byte.class, Byte.TYPE);
         primitives.put(Character.class, Character.TYPE);

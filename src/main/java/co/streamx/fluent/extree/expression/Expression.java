@@ -33,7 +33,7 @@ public abstract class Expression {
 
     static {
 
-        HashMap<Method, Class<?>> unboxers = new HashMap<Method, Class<?>>(8);
+        HashMap<Method, Class<?>> unboxers = new HashMap<Method, Class<?>>();
         try {
             unboxers.put(Boolean.class.getMethod("booleanValue"), Boolean.TYPE);
             unboxers.put(Byte.class.getMethod("byteValue"), Byte.TYPE);
@@ -47,7 +47,7 @@ public abstract class Expression {
             throw new RuntimeException(e);
         }
 
-        HashMap<Method, Class<?>> boxers = new HashMap<Method, Class<?>>(8);
+        HashMap<Method, Class<?>> boxers = new HashMap<Method, Class<?>>();
         try {
             boxers.put(Boolean.class.getMethod("valueOf", Boolean.TYPE), Boolean.class);
             boxers.put(Byte.class.getMethod("valueOf", Byte.TYPE), Byte.class);
