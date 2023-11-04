@@ -17,6 +17,7 @@ import java.util.stream.IntStream;
 
 import lombok.val;
 import lombok.var;
+import org.danekja.java.misc.serializable.SerializableRunnable;
 import org.danekja.java.util.function.serializable.*;
 import org.junit.Test;
 
@@ -389,7 +390,7 @@ public class LambdaExpressionTest implements Serializable {
     public void testMethodRef3() throws Throwable {
         Person p = new Person();
         p.setAge(1);
-        LambdaExpression<Supplier<Integer>> parsed = LambdaExpression.parseMethod(p::getAge);
+        LambdaExpression<SerializableSupplier<Integer>> parsed = LambdaExpression.parseMethod(p::getAge);
         Function<Object[], ?> compiled = parsed.compile();
 
 //        Object delegate = compiled.apply(new Object[]{});
@@ -416,7 +417,7 @@ public class LambdaExpressionTest implements Serializable {
     @Test
     public void testMethodRef41() throws Throwable {
 
-        Runnable r = () -> {
+        SerializableRunnable r = () -> {
             SerializableFunction<Person, Integer> pp = p -> p.getParent().getHeight();
             Person person = new Person();
             person.setParent(new Person());
@@ -435,7 +436,7 @@ public class LambdaExpressionTest implements Serializable {
         Person p = new Person();
         p.setParent(new Person());
         p.getParent().setAge(1);
-        Supplier<Integer> supplier = () -> p.getParent().getAge();
+        SerializableSupplier<Integer> supplier = () -> p.getParent().getAge();
         val parsed = LambdaExpression.parseMethod(supplier);
         Function<Object[], ?> compiled = parsed.compile();
 
@@ -726,7 +727,7 @@ public class LambdaExpressionTest implements Serializable {
         };
 
 
-        parsed = (LambdaExpression<Function<Short, BiFunction<Float, Character, Function<Integer, Float>>>>) parsed.accept(syntheticRemover);
+        parsed = (LambdaExpression<SerializableFunction<Short, BiFunction<Float, Character, Function<Integer, Float>>>>) parsed.accept(syntheticRemover);
 
         val compiled = (Function<Object[], Function<Object[], Function<Object[], ?>>>) parsed.compile();
 
@@ -841,7 +842,7 @@ public class LambdaExpressionTest implements Serializable {
      @Test
      public void testGetExpressionType() {
 
-         Supplier<Long> currentTimeMillis = System::currentTimeMillis;
+         SerializableSupplier<Long> currentTimeMillis = System::currentTimeMillis;
 
          LambdaExpression<Supplier<Long>> parsed = LambdaExpression.parse(currentTimeMillis);
 
