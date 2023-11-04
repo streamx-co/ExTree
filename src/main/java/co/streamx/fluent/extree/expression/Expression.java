@@ -11,6 +11,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.Supplier;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -32,7 +33,7 @@ public abstract class Expression {
 
     static {
 
-        HashMap<Method, Class<?>> unboxers = new HashMap<Method, Class<?>>(8);
+        HashMap<Method, Class<?>> unboxers = new HashMap<Method, Class<?>>();
         try {
             unboxers.put(Boolean.class.getMethod("booleanValue"), Boolean.TYPE);
             unboxers.put(Byte.class.getMethod("byteValue"), Byte.TYPE);
@@ -46,7 +47,7 @@ public abstract class Expression {
             throw new RuntimeException(e);
         }
 
-        HashMap<Method, Class<?>> boxers = new HashMap<Method, Class<?>>(8);
+        HashMap<Method, Class<?>> boxers = new HashMap<Method, Class<?>>();
         try {
             boxers.put(Boolean.class.getMethod("valueOf", Boolean.TYPE), Boolean.class);
             boxers.put(Byte.class.getMethod("valueOf", Byte.TYPE), Byte.class);
@@ -808,7 +809,16 @@ public abstract class Expression {
                                              List<ParameterExpression> parameters,
                                              List<Expression> locals,
                                              Object key) {
-        return new LambdaExpression<Object>(resultType, body, parameters, locals, key);
+        return new LambdaExpression<Object>(resultType, body, parameters, locals, key, null);
+    }
+
+    static <T> LambdaExpression<T> lambda(Class<?> resultType,
+                                      Expression body,
+                                      List<ParameterExpression> parameters,
+                                      List<Expression> locals,
+                                      Object key,
+                                      Supplier<LambdaExpression<T>> parser) {
+        return new LambdaExpression<T>(resultType, body, parameters, locals, key, parser);
     }
 
     /**
@@ -1009,13 +1019,13 @@ public abstract class Expression {
      *         method equal to Invoke.
      */
     public static InvocationExpression invoke(InvocableExpression method,
-                                              List<Expression> arguments) {
-        arguments = new ArrayList<>(arguments);
-        method = ExpressionClassCracker.get().parseSyntheticArguments(method, arguments);
-        return new InvocationExpression(method, arguments);
+                                              List<? extends Expression> arguments) {
+        List<Expression> args = new ArrayList<>(arguments);
+        method = ExpressionClassCracker.get().parseSyntheticArguments(method, args);
+        return new InvocationExpression(method, args);
     }
 
-    private static List<ParameterExpression> getParameters(Member member) {
+    static List<ParameterExpression> getParameters(Member member) {
 
         Class<?>[] params;
         if (member instanceof Constructor<?>) {

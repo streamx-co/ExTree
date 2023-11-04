@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -25,12 +26,13 @@ public final class LambdaExpression<F> extends InvocableExpression {
     private final Expression body;
     private final List<Expression> locals;
     private final Object key;
+    private final Supplier<LambdaExpression<F>> parser;
 
     // private static final Map<Class<?>, WeakReference<LambdaExpression<?>>> _cache = Collections
     // .synchronizedMap(new WeakHashMap<Class<?>, WeakReference<LambdaExpression<?>>>());
 
     LambdaExpression(Class<?> resultType, @NonNull Expression body, List<ParameterExpression> params,
-            @NonNull List<Expression> locals, Object key) {
+                     @NonNull List<Expression> locals, Object key, Supplier<LambdaExpression<F>> parser) {
         super(ExpressionType.Lambda, resultType, params);
 
         if (!TypeConverter.isAssignable(resultType, body.getResultType()))
@@ -39,6 +41,24 @@ public final class LambdaExpression<F> extends InvocableExpression {
         this.body = body;
         this.locals = locals;
         this.key = key;
+        this.parser = parser;
+    }
+
+    /**
+     * Gets a value indicating whether the lambda expression tree node represents a lambda expression calling a
+     * method.
+     */
+    public boolean isMethodRef() {
+        return parser != null;
+    }
+
+    /**
+     * If the LambdaExpression wraps a method call, then returns the method representation as an AST.<br/>
+     * Otherwise, returns the current lambda expression.<br/>
+     * The result is always semantically equivalent to the current lambda expression.
+     */
+    public LambdaExpression<F> parseMethodRef() {
+        return isMethodRef() ? parser.get() : this;
     }
 
     /**

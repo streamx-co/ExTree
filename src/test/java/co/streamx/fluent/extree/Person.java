@@ -9,6 +9,7 @@ public class Person {
 	private String name;
 	private int age;
 	private Integer height = 1;
+	private Person parent;
 
 	public boolean isAdult() {
 		return age >= 18;

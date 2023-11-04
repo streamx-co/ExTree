@@ -43,12 +43,12 @@ public abstract class SimpleExpressionVisitor implements ExpressionVisitor<Expre
         if (original != null) {
             List<T> list = null;
             for (int i = 0, n = original.size(); i < n; i++) {
-                T t = original.get(i);
+                final T t = original.get(i);
                 @SuppressWarnings("unchecked")
-                T p = t != null ? (T) t.accept(this) : t;
+                final T p = t != null ? (T) t.accept(this) : null;
                 if (list != null) {
                     list.add(p);
-                } else if (p != original.get(i)) {
+                } else if (p != t) {
                     list = new ArrayList<>(n);
                     for (int j = 0; j < i; j++) {
                         list.add(original.get(j));

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.SerializedLambda;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,7 +12,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
+import lombok.SneakyThrows;
+import lombok.val;
+import lombok.var;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.Handle;
@@ -23,20 +28,20 @@ import org.objectweb.asm.Type;
 import co.streamx.fluent.extree.expression.ExpressionStack.BranchExpression;
 
 /**
- * 
+ *
  */
 
 final class ExpressionMethodVisitor extends MethodVisitor {
 
-    private static final Class<?>[] NumericTypeLookup = new Class<?>[] { Integer.TYPE, Long.TYPE, Float.TYPE,
-            Double.TYPE };
-    private static final Class<?>[] NumericTypeLookup2 = new Class<?>[] { Byte.TYPE, Character.TYPE, Short.TYPE };
+    private static final Class<?>[] NumericTypeLookup = new Class<?>[]{Integer.TYPE, Long.TYPE, Float.TYPE,
+            Double.TYPE};
+    private static final Class<?>[] NumericTypeLookup2 = new Class<?>[]{Byte.TYPE, Character.TYPE, Short.TYPE};
     private static final String LambdaMetafactoryClassInternalName = LambdaMetafactory.class.getName()
             .replace('.', '/');
 
     private static final Map<Class<?>, Class<?>> _primitives;
-    private static final Class<?>[] arrayTypesByCode = new Class[] { Boolean.TYPE, Character.TYPE, Float.TYPE,
-            Double.TYPE, Byte.TYPE, Short.TYPE, Integer.TYPE, Long.TYPE };
+    private static final Class<?>[] arrayTypesByCode = new Class[]{Boolean.TYPE, Character.TYPE, Float.TYPE,
+            Double.TYPE, Byte.TYPE, Short.TYPE, Integer.TYPE, Long.TYPE};
 
     private ExpressionStack _exprStack;
     private List<Expression> _statements;
@@ -49,7 +54,7 @@ final class ExpressionMethodVisitor extends MethodVisitor {
     private final Expression _me;
 
     static {
-        Map<Class<?>, Class<?>> primitives = new HashMap<Class<?>, Class<?>>(8);
+        Map<Class<?>, Class<?>> primitives = new HashMap<Class<?>, Class<?>>();
         primitives.put(Boolean.class, Boolean.TYPE);
         primitives.put(Byte.class, Byte.TYPE);
         primitives.put(Character.class, Character.TYPE);
@@ -177,8 +182,7 @@ final class ExpressionMethodVisitor extends MethodVisitor {
                     _statements.addAll(_exprStack);
                     _exprStack.sort(_statements);
                 }
-            }
-            else {
+            } else {
                 assert _exprStack.size() == 1;
                 _classVisitor.setResult(_exprStack.pop());
             }
@@ -198,30 +202,30 @@ final class ExpressionMethodVisitor extends MethodVisitor {
         Expression e;
         boolean isSyntheticConstant = false;
         switch (opcode) {
-        case Opcodes.GETFIELD:
-            Expression instance = _exprStack.pop();
-            try {
-                e = Expression.get(instance, name);
-            } catch (NoSuchFieldException nsfe) {
-                throw new RuntimeException(nsfe);
-            }
-            if (instance.getExpressionType() == ExpressionType.Constant && instance.getResultType().isSynthetic())
-                isSyntheticConstant = true;
-            break;
-        case Opcodes.GETSTATIC:
-            try {
-                Class<?> containingClass = _classVisitor.getClass(Type.getObjectType(owner));
-                e = Expression.get(containingClass, name);
-                if (containingClass.isSynthetic())
+            case Opcodes.GETFIELD:
+                Expression instance = _exprStack.pop();
+                try {
+                    e = Expression.get(instance, name);
+                } catch (NoSuchFieldException nsfe) {
+                    throw new RuntimeException(nsfe);
+                }
+                if (instance.getExpressionType() == ExpressionType.Constant && instance.getResultType().isSynthetic())
                     isSyntheticConstant = true;
-            } catch (NoSuchFieldException nsfe) {
-                throw new RuntimeException(nsfe);
-            }
-            break;
-        case Opcodes.PUTFIELD:
-        case Opcodes.PUTSTATIC:
-        default:
-            throw notLambda(opcode);
+                break;
+            case Opcodes.GETSTATIC:
+                try {
+                    Class<?> containingClass = _classVisitor.getClass(Type.getObjectType(owner));
+                    e = Expression.get(containingClass, name);
+                    if (containingClass.isSynthetic())
+                        isSyntheticConstant = true;
+                } catch (NoSuchFieldException nsfe) {
+                    throw new RuntimeException(nsfe);
+                }
+                break;
+            case Opcodes.PUTFIELD:
+            case Opcodes.PUTSTATIC:
+            default:
+                throw notLambda(opcode);
         }
 
         if (isSyntheticConstant) {
@@ -254,245 +258,245 @@ final class ExpressionMethodVisitor extends MethodVisitor {
         Expression first;
         Expression second;
         switch (opcode) {
-        case Opcodes.ARRAYLENGTH:
-            e = Expression.arrayLength(_exprStack.pop());
-            break;
-        case Opcodes.ACONST_NULL:
-            e = Expression.constant(null, Object.class);
-            break;
-        case Opcodes.IALOAD:
-        case Opcodes.LALOAD:
-        case Opcodes.FALOAD:
-        case Opcodes.DALOAD:
-        case Opcodes.AALOAD:
-        case Opcodes.BALOAD:
-        case Opcodes.CALOAD:
-        case Opcodes.SALOAD:
-            first = _exprStack.pop();
-            second = _exprStack.pop();
-            e = Expression.arrayIndex(second, first);
-            break;
-        case Opcodes.DCONST_0:
-            e = Expression.constant(0d, Double.TYPE);
-            break;
-        case Opcodes.DCONST_1:
-            e = Expression.constant(1d, Double.TYPE);
-            break;
-        case Opcodes.FCMPG:
-        case Opcodes.FCMPL:
-        case Opcodes.DCMPG:
-        case Opcodes.DCMPL:
-        case Opcodes.LCMP:
-            first = _exprStack.pop();
-            second = _exprStack.pop();
-            e = Expression.subtract(second, first);
-            break;
-        case Opcodes.FCONST_0:
-            e = Expression.constant(0f, Float.TYPE);
-            break;
-        case Opcodes.FCONST_1:
-            e = Expression.constant(1f, Float.TYPE);
-            break;
-        case Opcodes.FCONST_2:
-            e = Expression.constant(2f, Float.TYPE);
-            break;
-        case Opcodes.ICONST_M1:
-            e = Expression.constant(-1, Integer.TYPE);
-            break;
-        case Opcodes.ICONST_0:
-            e = Expression.constant(0, Integer.TYPE);
-            break;
-        case Opcodes.ICONST_1:
-            e = Expression.constant(1, Integer.TYPE);
-            break;
-        case Opcodes.ICONST_2:
-            e = Expression.constant(2, Integer.TYPE);
-            break;
-        case Opcodes.ICONST_3:
-            e = Expression.constant(3, Integer.TYPE);
-            break;
-        case Opcodes.ICONST_4:
-            e = Expression.constant(4, Integer.TYPE);
-            break;
-        case Opcodes.ICONST_5:
-            e = Expression.constant(5, Integer.TYPE);
-            break;
-        case Opcodes.LCONST_0:
-            e = Expression.constant(0l, Long.TYPE);
-            break;
-        case Opcodes.LCONST_1:
-            e = Expression.constant(1l, Long.TYPE);
-            break;
-        case Opcodes.IADD:
-        case Opcodes.LADD:
-        case Opcodes.FADD:
-        case Opcodes.DADD:
-            first = _exprStack.pop();
-            second = _exprStack.pop();
-            e = Expression.add(second, first);
-            break;
-        case Opcodes.ISUB:
-        case Opcodes.LSUB:
-        case Opcodes.FSUB:
-        case Opcodes.DSUB:
-            first = _exprStack.pop();
-            second = _exprStack.pop();
-            e = Expression.subtract(second, first);
-            break;
-        case Opcodes.IMUL:
-        case Opcodes.LMUL:
-        case Opcodes.FMUL:
-        case Opcodes.DMUL:
-            first = _exprStack.pop();
-            second = _exprStack.pop();
-            e = Expression.multiply(second, first);
-            break;
-        case Opcodes.IDIV:
-        case Opcodes.LDIV:
-        case Opcodes.FDIV:
-        case Opcodes.DDIV:
-            first = _exprStack.pop();
-            second = _exprStack.pop();
-            e = Expression.divide(second, first);
-            break;
-        case Opcodes.IREM:
-        case Opcodes.LREM:
-        case Opcodes.FREM:
-        case Opcodes.DREM:
-            first = _exprStack.pop();
-            second = _exprStack.pop();
-            e = Expression.modulo(second, first);
-            break;
-        case Opcodes.INEG:
-        case Opcodes.LNEG:
-        case Opcodes.FNEG:
-        case Opcodes.DNEG:
-            first = _exprStack.pop();
-            e = Expression.negate(first);
-            break;
-        case Opcodes.ISHL:
-        case Opcodes.LSHL:
-            first = _exprStack.pop();
-            second = _exprStack.pop();
-            e = Expression.leftShift(second, first);
-            break;
-        case Opcodes.ISHR:
-        case Opcodes.LSHR:
-            first = _exprStack.pop();
-            second = _exprStack.pop();
-            e = Expression.rightShift(second, first);
-            break;
-        case Opcodes.IUSHR:
-        case Opcodes.LUSHR:
-            first = _exprStack.pop();
-            second = _exprStack.pop();
-            e = Expression.rightShift(second, first);
-            break;
-        case Opcodes.IAND:
-        case Opcodes.LAND:
-            first = _exprStack.pop();
-            second = _exprStack.pop();
-            e = Expression.bitwiseAnd(second, first);
-            break;
-        case Opcodes.IOR:
-        case Opcodes.LOR:
-            first = _exprStack.pop();
-            second = _exprStack.pop();
-            e = Expression.bitwiseOr(second, first);
-            break;
-        case Opcodes.IXOR:
-        case Opcodes.LXOR:
-            first = _exprStack.pop();
-            second = _exprStack.pop();
-            e = Expression.exclusiveOr(second, first);
-            break;
-        case Opcodes.I2B:
-        case Opcodes.I2C:
-        case Opcodes.I2S:
-            first = _exprStack.pop();
-            e = Expression.convert(first, NumericTypeLookup2[opcode - Opcodes.I2B]);
-            break;
-        case Opcodes.I2L:
-        case Opcodes.I2F:
-        case Opcodes.I2D:
-            first = _exprStack.pop();
-            e = Expression.convert(first, NumericTypeLookup[opcode - Opcodes.I2L + 1]);
-            break;
-        case Opcodes.L2I:
-        case Opcodes.L2F:
-        case Opcodes.L2D:
-            int l2l = opcode > Opcodes.L2I ? 1 : 0;
-            first = _exprStack.pop();
-            e = Expression.convert(first, NumericTypeLookup[opcode - Opcodes.L2I + l2l]);
-            break;
-        case Opcodes.F2I:
-        case Opcodes.F2L:
-        case Opcodes.F2D:
-            int f2f = opcode == Opcodes.F2D ? 1 : 0;
-            first = _exprStack.pop();
-            e = Expression.convert(first, NumericTypeLookup[opcode - Opcodes.F2I + f2f]);
-            break;
-        case Opcodes.D2I:
-        case Opcodes.D2L:
-        case Opcodes.D2F:
-            first = _exprStack.pop();
-            e = Expression.convert(first, NumericTypeLookup[opcode - Opcodes.D2I]);
-            break;
-        case Opcodes.IRETURN:
-        case Opcodes.LRETURN:
-        case Opcodes.FRETURN:
-        case Opcodes.DRETURN:
-        case Opcodes.ARETURN:
+            case Opcodes.ARRAYLENGTH:
+                e = Expression.arrayLength(_exprStack.pop());
+                break;
+            case Opcodes.ACONST_NULL:
+                e = Expression.constant(null, Object.class);
+                break;
+            case Opcodes.IALOAD:
+            case Opcodes.LALOAD:
+            case Opcodes.FALOAD:
+            case Opcodes.DALOAD:
+            case Opcodes.AALOAD:
+            case Opcodes.BALOAD:
+            case Opcodes.CALOAD:
+            case Opcodes.SALOAD:
+                first = _exprStack.pop();
+                second = _exprStack.pop();
+                e = Expression.arrayIndex(second, first);
+                break;
+            case Opcodes.DCONST_0:
+                e = Expression.constant(0d, Double.TYPE);
+                break;
+            case Opcodes.DCONST_1:
+                e = Expression.constant(1d, Double.TYPE);
+                break;
+            case Opcodes.FCMPG:
+            case Opcodes.FCMPL:
+            case Opcodes.DCMPG:
+            case Opcodes.DCMPL:
+            case Opcodes.LCMP:
+                first = _exprStack.pop();
+                second = _exprStack.pop();
+                e = Expression.subtract(second, first);
+                break;
+            case Opcodes.FCONST_0:
+                e = Expression.constant(0f, Float.TYPE);
+                break;
+            case Opcodes.FCONST_1:
+                e = Expression.constant(1f, Float.TYPE);
+                break;
+            case Opcodes.FCONST_2:
+                e = Expression.constant(2f, Float.TYPE);
+                break;
+            case Opcodes.ICONST_M1:
+                e = Expression.constant(-1, Integer.TYPE);
+                break;
+            case Opcodes.ICONST_0:
+                e = Expression.constant(0, Integer.TYPE);
+                break;
+            case Opcodes.ICONST_1:
+                e = Expression.constant(1, Integer.TYPE);
+                break;
+            case Opcodes.ICONST_2:
+                e = Expression.constant(2, Integer.TYPE);
+                break;
+            case Opcodes.ICONST_3:
+                e = Expression.constant(3, Integer.TYPE);
+                break;
+            case Opcodes.ICONST_4:
+                e = Expression.constant(4, Integer.TYPE);
+                break;
+            case Opcodes.ICONST_5:
+                e = Expression.constant(5, Integer.TYPE);
+                break;
+            case Opcodes.LCONST_0:
+                e = Expression.constant(0l, Long.TYPE);
+                break;
+            case Opcodes.LCONST_1:
+                e = Expression.constant(1l, Long.TYPE);
+                break;
+            case Opcodes.IADD:
+            case Opcodes.LADD:
+            case Opcodes.FADD:
+            case Opcodes.DADD:
+                first = _exprStack.pop();
+                second = _exprStack.pop();
+                e = Expression.add(second, first);
+                break;
+            case Opcodes.ISUB:
+            case Opcodes.LSUB:
+            case Opcodes.FSUB:
+            case Opcodes.DSUB:
+                first = _exprStack.pop();
+                second = _exprStack.pop();
+                e = Expression.subtract(second, first);
+                break;
+            case Opcodes.IMUL:
+            case Opcodes.LMUL:
+            case Opcodes.FMUL:
+            case Opcodes.DMUL:
+                first = _exprStack.pop();
+                second = _exprStack.pop();
+                e = Expression.multiply(second, first);
+                break;
+            case Opcodes.IDIV:
+            case Opcodes.LDIV:
+            case Opcodes.FDIV:
+            case Opcodes.DDIV:
+                first = _exprStack.pop();
+                second = _exprStack.pop();
+                e = Expression.divide(second, first);
+                break;
+            case Opcodes.IREM:
+            case Opcodes.LREM:
+            case Opcodes.FREM:
+            case Opcodes.DREM:
+                first = _exprStack.pop();
+                second = _exprStack.pop();
+                e = Expression.modulo(second, first);
+                break;
+            case Opcodes.INEG:
+            case Opcodes.LNEG:
+            case Opcodes.FNEG:
+            case Opcodes.DNEG:
+                first = _exprStack.pop();
+                e = Expression.negate(first);
+                break;
+            case Opcodes.ISHL:
+            case Opcodes.LSHL:
+                first = _exprStack.pop();
+                second = _exprStack.pop();
+                e = Expression.leftShift(second, first);
+                break;
+            case Opcodes.ISHR:
+            case Opcodes.LSHR:
+                first = _exprStack.pop();
+                second = _exprStack.pop();
+                e = Expression.rightShift(second, first);
+                break;
+            case Opcodes.IUSHR:
+            case Opcodes.LUSHR:
+                first = _exprStack.pop();
+                second = _exprStack.pop();
+                e = Expression.rightShift(second, first);
+                break;
+            case Opcodes.IAND:
+            case Opcodes.LAND:
+                first = _exprStack.pop();
+                second = _exprStack.pop();
+                e = Expression.bitwiseAnd(second, first);
+                break;
+            case Opcodes.IOR:
+            case Opcodes.LOR:
+                first = _exprStack.pop();
+                second = _exprStack.pop();
+                e = Expression.bitwiseOr(second, first);
+                break;
+            case Opcodes.IXOR:
+            case Opcodes.LXOR:
+                first = _exprStack.pop();
+                second = _exprStack.pop();
+                e = Expression.exclusiveOr(second, first);
+                break;
+            case Opcodes.I2B:
+            case Opcodes.I2C:
+            case Opcodes.I2S:
+                first = _exprStack.pop();
+                e = Expression.convert(first, NumericTypeLookup2[opcode - Opcodes.I2B]);
+                break;
+            case Opcodes.I2L:
+            case Opcodes.I2F:
+            case Opcodes.I2D:
+                first = _exprStack.pop();
+                e = Expression.convert(first, NumericTypeLookup[opcode - Opcodes.I2L + 1]);
+                break;
+            case Opcodes.L2I:
+            case Opcodes.L2F:
+            case Opcodes.L2D:
+                int l2l = opcode > Opcodes.L2I ? 1 : 0;
+                first = _exprStack.pop();
+                e = Expression.convert(first, NumericTypeLookup[opcode - Opcodes.L2I + l2l]);
+                break;
+            case Opcodes.F2I:
+            case Opcodes.F2L:
+            case Opcodes.F2D:
+                int f2f = opcode == Opcodes.F2D ? 1 : 0;
+                first = _exprStack.pop();
+                e = Expression.convert(first, NumericTypeLookup[opcode - Opcodes.F2I + f2f]);
+                break;
+            case Opcodes.D2I:
+            case Opcodes.D2L:
+            case Opcodes.D2F:
+                first = _exprStack.pop();
+                e = Expression.convert(first, NumericTypeLookup[opcode - Opcodes.D2I]);
+                break;
+            case Opcodes.IRETURN:
+            case Opcodes.LRETURN:
+            case Opcodes.FRETURN:
+            case Opcodes.DRETURN:
+            case Opcodes.ARETURN:
 
-            go(null);
+                go(null);
 
-            return;
-        case Opcodes.SWAP:
-            first = _exprStack.pop();
-            second = _exprStack.pop();
-            _exprStack.push(first);
-            _exprStack.push(second);
-        case Opcodes.DUP:
-        case Opcodes.DUP_X1:
-        case Opcodes.DUP_X2:
-        case Opcodes.DUP2:
-        case Opcodes.DUP2_X1:
-        case Opcodes.DUP2_X2:
-            // our stack is not divided to words
-            int base = (opcode - Opcodes.DUP) % 3;
-            base++;
-            dup(_exprStack, base, base - 1);
-            return;
-        case Opcodes.NOP:
-        case Opcodes.RETURN:
-            return;
-        case Opcodes.POP:
-        case Opcodes.POP2:
-            if (_statements == null)
-                _statements = new ArrayList<>();
-            _statements.add(_exprStack.pop());
-            return;
-        case Opcodes.AASTORE:
-        case Opcodes.BASTORE:
-        case Opcodes.CASTORE:
-        case Opcodes.DASTORE:
-        case Opcodes.FASTORE:
-        case Opcodes.IASTORE:
-        case Opcodes.LASTORE:
-        case Opcodes.SASTORE:
-            Expression value = _exprStack.pop();
-            Expression index = _exprStack.pop();
-            Expression newArrayInit = _exprStack.pop();
-            if (!(index instanceof ConstantExpression) || !index.getResultType().equals(Integer.TYPE))
+                return;
+            case Opcodes.SWAP:
+                first = _exprStack.pop();
+                second = _exprStack.pop();
+                _exprStack.push(first);
+                _exprStack.push(second);
+            case Opcodes.DUP:
+            case Opcodes.DUP_X1:
+            case Opcodes.DUP_X2:
+            case Opcodes.DUP2:
+            case Opcodes.DUP2_X1:
+            case Opcodes.DUP2_X2:
+                // our stack is not divided to words
+                int base = (opcode - Opcodes.DUP) % 3;
+                base++;
+                dup(_exprStack, base, base - 1);
+                return;
+            case Opcodes.NOP:
+            case Opcodes.RETURN:
+                return;
+            case Opcodes.POP:
+            case Opcodes.POP2:
+                if (_statements == null)
+                    _statements = new ArrayList<>();
+                _statements.add(_exprStack.pop());
+                return;
+            case Opcodes.AASTORE:
+            case Opcodes.BASTORE:
+            case Opcodes.CASTORE:
+            case Opcodes.DASTORE:
+            case Opcodes.FASTORE:
+            case Opcodes.IASTORE:
+            case Opcodes.LASTORE:
+            case Opcodes.SASTORE:
+                Expression value = _exprStack.pop();
+                Expression index = _exprStack.pop();
+                Expression newArrayInit = _exprStack.pop();
+                if (!(index instanceof ConstantExpression) || !index.getResultType().equals(Integer.TYPE))
+                    throw notLambda(opcode);
+
+                if (!(newArrayInit instanceof NewArrayInitExpression))
+                    throw notLambda(opcode);
+                NewArrayInitExpression newArrayInitExpression = (NewArrayInitExpression) newArrayInit;
+                newArrayInitExpression.getInitializers().set((Integer) ((ConstantExpression) index).getValue(), value);
+                return;
+            default:
                 throw notLambda(opcode);
-
-            if (!(newArrayInit instanceof NewArrayInitExpression))
-                throw notLambda(opcode);
-            NewArrayInitExpression newArrayInitExpression = (NewArrayInitExpression) newArrayInit;
-            newArrayInitExpression.getInitializers().set((Integer) ((ConstantExpression) index).getValue(), value);
-            return;
-        default:
-            throw notLambda(opcode);
         }
 
         _exprStack.push(e);
@@ -513,15 +517,15 @@ final class ExpressionMethodVisitor extends MethodVisitor {
     public void visitIntInsn(int opcode,
                              int operand) {
         switch (opcode) {
-        case Opcodes.BIPUSH:
-        case Opcodes.SIPUSH:
-            _exprStack.push(Expression.constant(operand, Integer.TYPE));
-            break;
-        case Opcodes.NEWARRAY:
-            _exprStack.push(createNewArrayInitExpression(opcode, arrayTypesByCode[operand - Opcodes.T_BOOLEAN]));
-            break;
-        default:
-            throw notLambda(opcode);
+            case Opcodes.BIPUSH:
+            case Opcodes.SIPUSH:
+                _exprStack.push(Expression.constant(operand, Integer.TYPE));
+                break;
+            case Opcodes.NEWARRAY:
+                _exprStack.push(createNewArrayInitExpression(opcode, arrayTypesByCode[operand - Opcodes.T_BOOLEAN]));
+                break;
+            default:
+                throw notLambda(opcode);
         }
     }
 
@@ -530,67 +534,67 @@ final class ExpressionMethodVisitor extends MethodVisitor {
                               Label label) {
         int etype;
         switch (opcode) {
-        case Opcodes.GOTO:
+            case Opcodes.GOTO:
 
-            go(label);
+                go(label);
 
-            return;
-        default:
-        case Opcodes.JSR:
-            throw notLambda(opcode);
-        case Opcodes.IFEQ:
-            etype = ExpressionType.NotEqual; // Equal
-            pushZeroConstantOrReduce();
-            break;
-        case Opcodes.IFNE:
-            etype = ExpressionType.Equal; // NotEqual
-            pushZeroConstantOrReduce();
-            break;
-        case Opcodes.IFLT:
-            etype = ExpressionType.GreaterThanOrEqual; // LessThan
-            pushZeroConstantOrReduce();
-            break;
-        case Opcodes.IFGE:
-            etype = ExpressionType.LessThan; // GreaterThanOrEqual
-            pushZeroConstantOrReduce();
-            break;
-        case Opcodes.IFGT:
-            etype = ExpressionType.LessThanOrEqual; // GreaterThan
-            pushZeroConstantOrReduce();
-            break;
-        case Opcodes.IFLE:
-            etype = ExpressionType.GreaterThan; // LessThanOrEqual
-            pushZeroConstantOrReduce();
-            break;
-        case Opcodes.IF_ICMPEQ:
-        case Opcodes.IF_ACMPEQ: // ??
-            etype = ExpressionType.NotEqual; // Equal
-            break;
-        case Opcodes.IF_ICMPNE:
-        case Opcodes.IF_ACMPNE: // ??
-            etype = ExpressionType.Equal; // NotEqual
-            break;
-        case Opcodes.IF_ICMPLT:
-            etype = ExpressionType.GreaterThanOrEqual; // LessThan
-            break;
-        case Opcodes.IF_ICMPGE:
-            etype = ExpressionType.LessThan; // GreaterThanOrEqual
-            break;
-        case Opcodes.IF_ICMPGT:
-            etype = ExpressionType.LessThanOrEqual; // GreaterThan
-            break;
-        case Opcodes.IF_ICMPLE:
-            etype = ExpressionType.GreaterThan; // LessThanOrEqual
-            break;
-        case Opcodes.IFNULL:
-        case Opcodes.IFNONNULL:
-            Expression e = Expression.isNull(_exprStack.pop());
-            if (opcode == Opcodes.IFNULL) // IFNONNULL
-                e = Expression.logicalNot(e);
+                return;
+            default:
+            case Opcodes.JSR:
+                throw notLambda(opcode);
+            case Opcodes.IFEQ:
+                etype = ExpressionType.NotEqual; // Equal
+                pushZeroConstantOrReduce();
+                break;
+            case Opcodes.IFNE:
+                etype = ExpressionType.Equal; // NotEqual
+                pushZeroConstantOrReduce();
+                break;
+            case Opcodes.IFLT:
+                etype = ExpressionType.GreaterThanOrEqual; // LessThan
+                pushZeroConstantOrReduce();
+                break;
+            case Opcodes.IFGE:
+                etype = ExpressionType.LessThan; // GreaterThanOrEqual
+                pushZeroConstantOrReduce();
+                break;
+            case Opcodes.IFGT:
+                etype = ExpressionType.LessThanOrEqual; // GreaterThan
+                pushZeroConstantOrReduce();
+                break;
+            case Opcodes.IFLE:
+                etype = ExpressionType.GreaterThan; // LessThanOrEqual
+                pushZeroConstantOrReduce();
+                break;
+            case Opcodes.IF_ICMPEQ:
+            case Opcodes.IF_ACMPEQ: // ??
+                etype = ExpressionType.NotEqual; // Equal
+                break;
+            case Opcodes.IF_ICMPNE:
+            case Opcodes.IF_ACMPNE: // ??
+                etype = ExpressionType.Equal; // NotEqual
+                break;
+            case Opcodes.IF_ICMPLT:
+                etype = ExpressionType.GreaterThanOrEqual; // LessThan
+                break;
+            case Opcodes.IF_ICMPGE:
+                etype = ExpressionType.LessThan; // GreaterThanOrEqual
+                break;
+            case Opcodes.IF_ICMPGT:
+                etype = ExpressionType.LessThanOrEqual; // GreaterThan
+                break;
+            case Opcodes.IF_ICMPLE:
+                etype = ExpressionType.GreaterThan; // LessThanOrEqual
+                break;
+            case Opcodes.IFNULL:
+            case Opcodes.IFNONNULL:
+                Expression e = Expression.isNull(_exprStack.pop());
+                if (opcode == Opcodes.IFNULL) // IFNONNULL
+                    e = Expression.logicalNot(e);
 
-            branch(label, e);
+                branch(label, e);
 
-            return;
+                return;
         }
 
         Expression second = _exprStack.pop();
@@ -792,6 +796,7 @@ final class ExpressionMethodVisitor extends MethodVisitor {
         }
     }
 
+    @SneakyThrows
     @Override
     public void visitInvokeDynamicInsn(String name,
                                        String descriptor,
@@ -801,50 +806,67 @@ final class ExpressionMethodVisitor extends MethodVisitor {
         String bootMethod = bootstrapMethodHandle.getName();
         if (!bootstrapMethodHandle.getOwner().equals(LambdaMetafactoryClassInternalName)
                 || !"Metafactory".regionMatches(true, 0, bootMethod, bootMethod.length() - "Metafactory".length(),
-                        "Metafactory".length())) {
+                "Metafactory".length())) {
             throw new UnsupportedOperationException("Unsupported bootstrapMethodHandle: " + bootstrapMethodHandle);
         }
 
-        // the following code creates partial applied lambda of
-        // bootstrapMethodArguments[2] Type
+        val handle = (Handle) bootstrapMethodArguments[1];
+        val internalName = handle.getOwner();
+        val objectType = Type.getObjectType(internalName);
+        val containingClass = _classVisitor.getClass(objectType);
 
-        Handle handle = (Handle) bootstrapMethodArguments[1];
-        Type objectType = Type.getObjectType(handle.getOwner());
-
-        Type[] argsTypes = Type.getArgumentTypes(descriptor);
-        Expression[] arguments = createArguments(argsTypes);
-
-        boolean hasThis = handle.getTag() == Opcodes.H_INVOKEINTERFACE || handle.getTag() == Opcodes.H_INVOKESPECIAL
+        val hasThis = handle.getTag() == Opcodes.H_INVOKEINTERFACE || handle.getTag() == Opcodes.H_INVOKESPECIAL
                 || handle.getTag() == Opcodes.H_INVOKEVIRTUAL;
 
-        // arguments can be empty if this is an external argument
-        Expression optionalThis = hasThis && arguments.length > 0 ? arguments[0] : null;
-        LambdaExpression<?> lambda = ExpressionClassCracker.get()
-                .lambdaFromClassLoader(_classVisitor.getLoader(), objectType.getInternalName(), optionalThis,
-                        handle.getName(),
-                        handle.getDesc());
+        Expression optionalThis = hasThis ? Expression.parameter(containingClass, 0) : null;
+        val methodDescriptor = handle.getDesc();
+        val targetParameterTypes = getParameterTypes(Type.getArgumentTypes(methodDescriptor));
+        val methodName = handle.getName();
+        val method = containingClass.getDeclaredMethod(methodName, targetParameterTypes);
 
-        if (optionalThis instanceof ConstantExpression) {
-            arguments = Arrays.copyOfRange(arguments, 1, arguments.length);
-            argsTypes = Arrays.copyOfRange(argsTypes, 1, argsTypes.length);
+        var params = Expression.getParameters(method);
+        val member = Expression.member(ExpressionType.MethodAccess, optionalThis, method,
+                method.getReturnType(), params);
+
+           /* if (!hasThis && argsTypes.length == 0) {
+                _exprStack.push(member);
+                return;
+            }*/
+
+        if (hasThis) {
+            params = new ArrayList<>(targetParameterTypes.length);
+            for (int i = 0; i < targetParameterTypes.length; i++) {
+                params.add(Expression.parameter(targetParameterTypes[i], i + 1));
+            }
         }
 
+        val call = Expression.invoke(member, params);
+        if (hasThis) {
+            params.add(0, (ParameterExpression) optionalThis);
+        }
+        val methodLoader = _classVisitor.getLoader();
+        val lambda = Expression.lambda(call.getResultType(), call, params, Collections.emptyList(), null,
+                method.isSynthetic() ? () -> ExpressionClassCracker.get()
+                        .lambdaFromClassLoader(methodLoader, internalName, optionalThis,
+                                methodName,
+                                methodDescriptor) : null);
+
+        val argsTypes = Type.getArgumentTypes(descriptor);
         if (argsTypes.length == 0) {
             _exprStack.push(lambda);
             return;
         }
 
+        val arguments = createArguments(argsTypes);
+
         Class<?>[] parameterTypes = getParameterTypes(argsTypes);
         convertArguments(arguments, parameterTypes);
-
-        List<ParameterExpression> params = new ArrayList<>(parameterTypes.length);
+        params = new ArrayList<>(parameterTypes.length);
         for (int i = 0; i < parameterTypes.length; i++) {
             params.add(Expression.parameter(parameterTypes[i], i));
         }
-
         LambdaExpression<?> partial = Expression.lambda(lambda.getResultType(), lambda, params,
                 Collections.emptyList(), null);
-
         InvocationExpression e = Expression.invoke(partial, arguments);
 
         _exprStack.push(e);
@@ -866,100 +888,100 @@ final class ExpressionMethodVisitor extends MethodVisitor {
         Expression e;
 
         switch (opcode) {
-        case Opcodes.INVOKESPECIAL:
-            if (name.equals("<init>")) {
-                Class<?>[] parameterTypes = getParameterTypes(argsTypes);
-                convertArguments(arguments, parameterTypes);
+            case Opcodes.INVOKESPECIAL:
+                if (name.equals("<init>")) {
+                    Class<?>[] parameterTypes = getParameterTypes(argsTypes);
+                    convertArguments(arguments, parameterTypes);
+                    try {
+                        e = Expression.newInstance(_exprStack.pop().getResultType(), parameterTypes, arguments);
+                    } catch (NoSuchMethodException nsme) {
+                        throw new RuntimeException(nsme);
+                    }
+                    _exprStack.pop(); // going to re-add it, which is not the JVM
+                    // semantics
+                    break;
+                }
+            case Opcodes.INVOKEVIRTUAL:
+            case Opcodes.INVOKEINTERFACE:
                 try {
-                    e = Expression.newInstance(_exprStack.pop().getResultType(), parameterTypes, arguments);
+                    Class<?> lambdaClass = _classVisitor.getClass(Type.getObjectType(owner));
+                    Expression instance = _exprStack.pop();
+                    if (instance.getExpressionType() == ExpressionType.Constant) {
+                        Object value = ((ConstantExpression) instance).getValue();
+                        if (value instanceof SerializedLambda) {
+                            SerializedLambda serialized = (SerializedLambda) value;
+                            ClassLoader lambdaClassLoader = _classVisitor.getLoader();
+                            Class<?> serializedClass;
+                            try {
+                                serializedClass = lambdaClassLoader
+                                        .loadClass(serialized.getFunctionalInterfaceClass().replace('/', '.'));
+                            } catch (ClassNotFoundException cnfe) {
+                                throw new RuntimeException(cnfe);
+                            }
+
+                            if (!lambdaClass.isAssignableFrom(serializedClass))
+                                throw new ClassCastException(serializedClass + " cannot be cast to " + lambdaClass);
+
+                            if (!serialized.getFunctionalInterfaceMethodName().equals(name))
+                                throw new NoSuchMethodException(name);
+
+                            LambdaExpression<?> lambda = ExpressionClassCracker.get().lambda(serialized, lambdaClassLoader);
+                            Class<?>[] parameterTypes = lambda.getParameters()
+                                    .stream()
+                                    .map(ParameterExpression::getResultType)
+                                    .toArray(Class[]::new);
+                            convertArguments(arguments, parameterTypes);
+                            e = Expression.invoke(lambda, arguments);
+                            break;
+                        } else {
+                            Class<? extends Object> instanceClass = value.getClass();
+
+                            if (instanceClass.isSynthetic()) {
+                                LambdaExpression<?> inst = (value instanceof Serializable)
+                                        ? ExpressionClassCracker.get().lambda(value, true)
+                                        : ExpressionClassCracker.get()
+                                        .lambdaFromFileSystem(value,
+                                                instance.getResultType()
+                                                        .getDeclaredMethod(name, getParameterTypes(argsTypes)),
+                                                null);
+
+                                e = Expression.invoke(inst, arguments);
+
+                                break;
+                            }
+                        }
+                    }
+
+                    Class<?>[] parameterTypes = getParameterTypes(argsTypes);
+                    convertArguments(arguments, parameterTypes);
+                    e = Expression.invoke(TypeConverter.convert(instance, lambdaClass), name, parameterTypes, arguments);
+
                 } catch (NoSuchMethodException nsme) {
                     throw new RuntimeException(nsme);
                 }
-                _exprStack.pop(); // going to re-add it, which is not the JVM
-                                  // semantics
                 break;
-            }
-        case Opcodes.INVOKEVIRTUAL:
-        case Opcodes.INVOKEINTERFACE:
-            try {
-                Class<?> lambdaClass = _classVisitor.getClass(Type.getObjectType(owner));
-                Expression instance = _exprStack.pop();
-                if (instance.getExpressionType() == ExpressionType.Constant) {
-                    Object value = ((ConstantExpression) instance).getValue();
-                    if (value instanceof SerializedLambda) {
-                        SerializedLambda serialized = (SerializedLambda) value;
-                        ClassLoader lambdaClassLoader = _classVisitor.getLoader();
-                        Class<?> serializedClass;
-                        try {
-                            serializedClass = lambdaClassLoader
-                                    .loadClass(serialized.getFunctionalInterfaceClass().replace('/', '.'));
-                        } catch (ClassNotFoundException cnfe) {
-                            throw new RuntimeException(cnfe);
-                        }
 
-                        if (!lambdaClass.isAssignableFrom(serializedClass))
-                            throw new ClassCastException(serializedClass + " cannot be cast to " + lambdaClass);
-
-                        if (!serialized.getFunctionalInterfaceMethodName().equals(name))
-                            throw new NoSuchMethodException(name);
-
-                        LambdaExpression<?> lambda = ExpressionClassCracker.get().lambda(serialized, lambdaClassLoader);
-                        Class<?>[] parameterTypes = lambda.getParameters()
-                                .stream()
-                                .map(ParameterExpression::getResultType)
-                                .toArray(Class[]::new);
-                        convertArguments(arguments, parameterTypes);
-                        e = Expression.invoke(lambda, arguments);
-                        break;
-                    } else {
-                        Class<? extends Object> instanceClass = value.getClass();
-
-                        if (instanceClass.isSynthetic()) {
-                            LambdaExpression<?> inst = (value instanceof Serializable)
-                                    ? ExpressionClassCracker.get().lambda(value, true)
-                                    : ExpressionClassCracker.get()
-                                            .lambdaFromFileSystem(value,
-                                                    instance.getResultType()
-                                                            .getDeclaredMethod(name, getParameterTypes(argsTypes)),
-                                                    null);
-
-                            e = Expression.invoke(inst, arguments);
-
-                            break;
-                        }
-                    }
-                }
-
+            case Opcodes.INVOKESTATIC:
                 Class<?>[] parameterTypes = getParameterTypes(argsTypes);
                 convertArguments(arguments, parameterTypes);
-                e = Expression.invoke(TypeConverter.convert(instance, lambdaClass), name, parameterTypes, arguments);
-
-            } catch (NoSuchMethodException nsme) {
-                throw new RuntimeException(nsme);
-            }
-            break;
-
-        case Opcodes.INVOKESTATIC:
-            Class<?>[] parameterTypes = getParameterTypes(argsTypes);
-            convertArguments(arguments, parameterTypes);
-            try {
-                Class<?> targetType = _classVisitor.getClass(Type.getObjectType(owner));
-                if (targetType.isSynthetic()) {
-                    LambdaExpression<?> lambda = ExpressionClassCracker.get()
-                            .lambdaFromFileSystem(null,
-                                    targetType.getDeclaredMethod(name, getParameterTypes(argsTypes)),
-                                    this._classVisitor.getLoader());
-                    e = Expression.invoke(lambda, arguments);
-                } else {
-                    e = Expression.invoke(targetType, name, parameterTypes, arguments);
+                try {
+                    Class<?> targetType = _classVisitor.getClass(Type.getObjectType(owner));
+                    if (targetType.isSynthetic()) {
+                        LambdaExpression<?> lambda = ExpressionClassCracker.get()
+                                .lambdaFromFileSystem(null,
+                                        targetType.getDeclaredMethod(name, getParameterTypes(argsTypes)),
+                                        this._classVisitor.getLoader());
+                        e = Expression.invoke(lambda, arguments);
+                    } else {
+                        e = Expression.invoke(targetType, name, parameterTypes, arguments);
+                    }
+                } catch (NoSuchMethodException nsme) {
+                    throw new RuntimeException(nsme);
                 }
-            } catch (NoSuchMethodException nsme) {
-                throw new RuntimeException(nsme);
-            }
-            break;
+                break;
 
-        default:
-            throw new IllegalArgumentException("opcode: " + opcode);
+            default:
+                throw new IllegalArgumentException("opcode: " + opcode);
         }
 
         _exprStack.push(e);
@@ -975,7 +997,7 @@ final class ExpressionMethodVisitor extends MethodVisitor {
 
     private Expression[] createArguments(Type[] argsTypes) {
         Expression[] arguments = new Expression[argsTypes.length];
-        for (int i = argsTypes.length; i > 0;) {
+        for (int i = argsTypes.length; i > 0; ) {
             i--;
             arguments[i] = _exprStack.pop();
         }
@@ -1025,24 +1047,24 @@ final class ExpressionMethodVisitor extends MethodVisitor {
         Class<?> resultType = _classVisitor.getClass(Type.getObjectType(type));
         Expression e;
         switch (opcode) {
-        case Opcodes.NEW:
-            e = Expression.constant(null, resultType);
-            break;
-        case Opcodes.CHECKCAST:
-            if (resultType == Object.class)
-                // there is no point in casting to object
-                return;
-            e = Expression.convert(_exprStack.pop(), resultType);
-            break;
-        case Opcodes.ANEWARRAY:
-            e = createNewArrayInitExpression(opcode, resultType);
-            break;
+            case Opcodes.NEW:
+                e = Expression.constant(null, resultType);
+                break;
+            case Opcodes.CHECKCAST:
+                if (resultType == Object.class)
+                    // there is no point in casting to object
+                    return;
+                e = Expression.convert(_exprStack.pop(), resultType);
+                break;
+            case Opcodes.ANEWARRAY:
+                e = createNewArrayInitExpression(opcode, resultType);
+                break;
 
-        case Opcodes.INSTANCEOF:
-            e = Expression.instanceOf(_exprStack.pop(), resultType);
-            break;
-        default:
-            throw notLambda(opcode);
+            case Opcodes.INSTANCEOF:
+                e = Expression.instanceOf(_exprStack.pop(), resultType);
+                break;
+            default:
+                throw notLambda(opcode);
         }
 
         _exprStack.push(e);
@@ -1072,48 +1094,48 @@ final class ExpressionMethodVisitor extends MethodVisitor {
 
         Class<?> type;
         switch (opcode) {
-        case Opcodes.ISTORE:
-        case Opcodes.LSTORE:
-        case Opcodes.FSTORE:
-        case Opcodes.DSTORE:
-        case Opcodes.ASTORE:
-            if (_localVariables == null)
-                _localVariables = new Expression[10];
+            case Opcodes.ISTORE:
+            case Opcodes.LSTORE:
+            case Opcodes.FSTORE:
+            case Opcodes.DSTORE:
+            case Opcodes.ASTORE:
+                if (_localVariables == null)
+                    _localVariables = new Expression[10];
 
-            var -= _argTypes.length;
+                var -= _argTypes.length;
 
-            if (var < 0)
-                throw new IllegalArgumentException("Parameter cannot be reassigned. Use local variables.");
-            else if (var >= _localVariables.length)
-                _localVariables = Arrays.copyOf(_localVariables, var >> 1);
-            else if (_localVariables[var] != null)
-                throw new IllegalArgumentException("Local variable must be final or effectively final.");
+                if (var < 0)
+                    throw new IllegalArgumentException("Parameter cannot be reassigned. Use local variables.");
+                else if (var >= _localVariables.length)
+                    _localVariables = Arrays.copyOf(_localVariables, var >> 1);
+                else if (_localVariables[var] != null)
+                    throw new IllegalArgumentException("Local variable must be final or effectively final.");
 
-            _localVariables[var] = _exprStack.pop();
-            return;
-        case Opcodes.RET:
-        default:
-            throw notLambda(opcode);
-        case Opcodes.ILOAD:
-            type = Integer.TYPE;
-            break;
-        case Opcodes.LLOAD:
-            type = Long.TYPE;
-            break;
-        case Opcodes.FLOAD:
-            type = Float.TYPE;
-            break;
-        case Opcodes.DLOAD:
-            type = Double.TYPE;
-            break;
-        case Opcodes.ALOAD:
-            if (var < _argTypes.length)
-                type = _argTypes[var];
-            else {
-                int localVar = var - _argTypes.length;
-                type = _localVariables[localVar].getResultType();
-            }
-            break;
+                _localVariables[var] = _exprStack.pop();
+                return;
+            case Opcodes.RET:
+            default:
+                throw notLambda(opcode);
+            case Opcodes.ILOAD:
+                type = Integer.TYPE;
+                break;
+            case Opcodes.LLOAD:
+                type = Long.TYPE;
+                break;
+            case Opcodes.FLOAD:
+                type = Float.TYPE;
+                break;
+            case Opcodes.DLOAD:
+                type = Double.TYPE;
+                break;
+            case Opcodes.ALOAD:
+                if (var < _argTypes.length)
+                    type = _argTypes[var];
+                else {
+                    int localVar = var - _argTypes.length;
+                    type = _localVariables[localVar].getResultType();
+                }
+                break;
         }
 
         _exprStack.push(Expression.parameter(type, var));

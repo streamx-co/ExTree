@@ -1,5 +1,6 @@
 package co.streamx.fluent.extree.expression;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
@@ -16,7 +17,7 @@ public final class InvocationExpression extends Expression {
 	private final InvocableExpression target;
 	private final List<Expression> arguments;
 
-	InvocationExpression(InvocableExpression method, List<Expression> arguments) {
+	InvocationExpression(InvocableExpression method, List<? extends Expression> arguments) {
 		super(ExpressionType.Invoke, method.getResultType());
 
 		List<ParameterExpression> pp = method.getParameters();
@@ -34,7 +35,7 @@ public final class InvocationExpression extends Expression {
 		}
 
 		this.target = method;
-		this.arguments = arguments;
+		this.arguments = new ArrayList<>(arguments);
 	}
 
 	@Override
