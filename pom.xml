@@ -45,13 +45,13 @@
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.13.1</version>
+			<version>4.13.2</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 	        <groupId>org.danekja</groupId>
 	        <artifactId>jdk-serializable-functional</artifactId>
-	        <version>1.8.5</version>
+	        <version>1.9.0</version>
 	        <scope>test</scope>
 	    </dependency>
 		<dependency>
@@ -138,7 +138,7 @@
 				    <plugin>
 		                <groupId>org.sonatype.plugins</groupId>
 		                <artifactId>nexus-staging-maven-plugin</artifactId>
-		                <version>1.6.8</version>
+		                <version>1.6.13</version>
 		                <extensions>true</extensions>
 		                <configuration>
 		                    <serverId>ossrh</serverId>
@@ -160,7 +160,7 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-source-plugin</artifactId>
-						<version>3.2.1</version>
+						<version>3.3.0</version>
 						<executions>
 							<execution>
 								<id>attach-sources</id>
