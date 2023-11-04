@@ -41,7 +41,7 @@ public class LambdaExpressionTest implements Serializable {
 
     @Test
     public void testParseNew() throws Throwable {
-        Predicate<java.util.Date> pp1 = new Predicate<Date>() {
+        Predicate<java.util.Date> pp1 = new SerializablePredicate<Date>() {
 
             @Override
             public boolean test(Date t) {
@@ -51,7 +51,7 @@ public class LambdaExpressionTest implements Serializable {
         };
         Class<? extends Predicate> class1 = pp1.getClass();
         class1.getName();
-        Predicate<java.util.Date> pp = d -> d.after(new java.sql.Time(System.currentTimeMillis()));
+        SerializablePredicate<java.util.Date> pp = d -> d.after(new java.sql.Time(System.currentTimeMillis()));
         LambdaExpression<Predicate<java.util.Date>> le = LambdaExpression.parse(pp);
         Function<Object[], ?> fr = le.compile();
 
@@ -78,7 +78,7 @@ public class LambdaExpressionTest implements Serializable {
 
     @Test
     public void testParseP() throws Throwable {
-        Predicate<Float> pp = t -> t > 6 ? t < 12 : t > 2;
+        SerializablePredicate<Float> pp = t -> t > 6 ? t < 12 : t > 2;
         LambdaExpression<Predicate<Float>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
 
@@ -104,7 +104,7 @@ public class LambdaExpressionTest implements Serializable {
     public void testParseP2() throws Throwable {
         final Object[] ar = new Object[] { 5 };
 
-        Predicate<Integer> pp = t -> (ar.length << t) == (1 << 5) && ar[0] instanceof Number;
+        SerializablePredicate<Integer> pp = t -> (ar.length << t) == (1 << 5) && ar[0] instanceof Number;
 
         LambdaExpression<Predicate<Integer>> parsed = LambdaExpression.parse(pp);
         parsed.toString();
@@ -117,7 +117,7 @@ public class LambdaExpressionTest implements Serializable {
     @Test
     public void testParseThisIsNonNull() throws Throwable {
 
-        Predicate<Integer> pp = t -> this != null;
+        SerializablePredicate<Integer> pp = t -> this != null;
 
         LambdaExpression<Predicate<Integer>> lambda = LambdaExpression.parse(pp);
 
@@ -129,7 +129,7 @@ public class LambdaExpressionTest implements Serializable {
     @Test
     public void testParseThisIsNull() throws Throwable {
 
-        Predicate<Integer> pp = t -> this == null;
+        SerializablePredicate<Integer> pp = t -> this == null;
 
         LambdaExpression<Predicate<Integer>> lambda = LambdaExpression.parse(pp);
 
@@ -153,7 +153,7 @@ public class LambdaExpressionTest implements Serializable {
 
     @Test
     public void testParseField() throws Throwable {
-        Predicate<Object[]> pp = t -> t.length == 3;
+        SerializablePredicate<Object[]> pp = t -> t.length == 3;
 
         LambdaExpression<Predicate<Object[]>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
@@ -167,7 +167,7 @@ public class LambdaExpressionTest implements Serializable {
 
     @Test
     public void testParse0() throws Throwable {
-        Supplier<Float> pp = () -> 23f;
+        SerializableSupplier<Float> pp = () -> 23f;
 
         LambdaExpression<Supplier<Float>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
@@ -181,7 +181,7 @@ public class LambdaExpressionTest implements Serializable {
 
         try {
             final Object[] x = new Object[1];
-            Supplier<Float> pp = () -> {
+            SerializableSupplier<Float> pp = () -> {
                 x[0] = null;
                 return 23f;
             };
@@ -197,7 +197,7 @@ public class LambdaExpressionTest implements Serializable {
 
     @Test
     public void testParse2() throws Throwable {
-        BiFunction<Float, Float, Boolean> pp = (Float t,
+        SerializableBiFunction<Float, Float, Boolean> pp = (Float t,
                                                 Float r) -> t > 6 ? r < 12 : t > 2;
 
         LambdaExpression<BiFunction<Float, Float, Boolean>> parsed = LambdaExpression.parse(pp);
@@ -220,7 +220,7 @@ public class LambdaExpressionTest implements Serializable {
 
     @Test
     public void testParse5() throws Throwable {
-        Predicate<Integer> pp = r -> (r < 6 ? r > 1 : r < 4) || (r > 25 ? r > 28 : r < 32)
+        SerializablePredicate<Integer> pp = r -> (r < 6 ? r > 1 : r < 4) || (r > 25 ? r > 28 : r < 32)
                 || (r < 23 ? r > 15 : r < 17);
 
         LambdaExpression<Predicate<Integer>> parsed = LambdaExpression.parse(pp);
@@ -252,7 +252,7 @@ public class LambdaExpressionTest implements Serializable {
 
     @Test
     public void testParse7() throws Throwable {
-        Predicate<Integer> pp = r -> (r < 6 && r > 25) || r < 23;
+        SerializablePredicate<Integer> pp = r -> (r < 6 && r > 25) || r < 23;
 
         LambdaExpression<Predicate<Integer>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
@@ -267,7 +267,7 @@ public class LambdaExpressionTest implements Serializable {
 
     @Test
     public void testParse8() throws Throwable {
-        Predicate<Integer> pp = r -> (r < 6 || r > 25) && r < 23;
+        SerializablePredicate<Integer> pp = r -> (r < 6 || r > 25) && r < 23;
 
         LambdaExpression<Predicate<Integer>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
@@ -297,7 +297,7 @@ public class LambdaExpressionTest implements Serializable {
 
     @Test
     public void testParse10() throws Throwable {
-        Function<Integer, Integer> pp = r -> ~r;
+        SerializableFunction<Integer, Integer> pp = r -> ~r;
 
         LambdaExpression<Function<Integer, Integer>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
@@ -312,7 +312,7 @@ public class LambdaExpressionTest implements Serializable {
 
     @Test
     public void testParse11() throws Throwable {
-        Function<Integer, Byte> pp = r -> (byte) (int) r;
+        SerializableFunction<Integer, Byte> pp = r -> (byte) (int) r;
 
         LambdaExpression<Function<Integer, Byte>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
@@ -385,7 +385,7 @@ public class LambdaExpressionTest implements Serializable {
 
     @Test(expected = NullPointerException.class)
     public void testParse12() throws Throwable {
-        Function<Integer, Byte> pp = r -> (byte) (int) r;
+        SerializableFunction<Integer, Byte> pp = r -> (byte) (int) r;
 
         LambdaExpression<Function<Integer, Byte>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
@@ -442,7 +442,7 @@ public class LambdaExpressionTest implements Serializable {
 
     @Test
     public void testExpression1() {
-        Predicate<Person> p = t -> t.getName() == "Maria Bonita";
+        SerializablePredicate<Person> p = t -> t.getName() == "Maria Bonita";
         final LambdaExpression<Predicate<Person>> ex = LambdaExpression.parse(p);
         assertNotNull(ex);
 
@@ -585,7 +585,7 @@ public class LambdaExpressionTest implements Serializable {
 
     @Test
     public void composition2NotSerializable() throws Exception {
-        Function<String, Integer> e = s -> s.charAt(0) + 1;
+        SerializableFunction<String, Integer> e = s -> s.charAt(0) + 1;
         e = e.andThen(i -> i + 4);
         LambdaExpression<Function<String, Integer>> parsed = LambdaExpression.parse(e);
 
@@ -596,7 +596,7 @@ public class LambdaExpressionTest implements Serializable {
 
     @Test
     public void composition3NotSerializable() throws Exception {
-        Function<String, Integer> e = s -> s.charAt(0) + 1;
+        SerializableFunction<String, Integer> e = s -> s.charAt(0) + 1;
         e = e.andThen(i -> i + 4);
         e = e.andThen(i -> i + 5);
         LambdaExpression<Function<String, Integer>> parsed = LambdaExpression.parse(e);
@@ -652,7 +652,7 @@ public class LambdaExpressionTest implements Serializable {
 
         Number f = 56;
 
-        Function<Short, BiFunction<Float, Character, Function<Integer, Float>>> e = y -> (x,
+        SerializableFunction<Short, BiFunction<Float, Character, Function<Integer, Float>>> e = y -> (x,
                                                                                           z) -> (m) -> y / x - z
                                                                                                   + f.floatValue() + 3
                                                                                                   - getSomething() + m;
