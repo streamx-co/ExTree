@@ -98,12 +98,12 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-site-plugin</artifactId>
-				<version>3.7.1</version>
+				<version>4.0.0-M11</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-project-info-reports-plugin</artifactId>
-				<version>3.0.0</version>
+				<version>3.4.5</version>
 			</plugin>
 		</plugins>
 	</build>
@@ -150,6 +150,7 @@
 		            <plugin>
 		                <groupId>org.apache.maven.plugins</groupId>
 		                <artifactId>maven-release-plugin</artifactId>
+						<version>3.0.1</version>
 		                <configuration>
 		                    <autoVersionSubmodules>true</autoVersionSubmodules>
 		                    <useReleaseProfile>false</useReleaseProfile>
@@ -191,7 +192,7 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-gpg-plugin</artifactId>
-						<version>1.6</version>
+						<version>3.1.0</version>
 						<executions>
 							<execution>
 								<id>sign-artifacts</id>
