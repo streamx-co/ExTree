@@ -1,42 +1,42 @@
 package co.streamx.fluent.extree;
 
 import java.io.Serializable;
+import java.lang.reflect.Member;
 import java.util.function.Function;
 
-import co.streamx.fluent.extree.expression.Expression;
-import co.streamx.fluent.extree.expression.InvocationExpression;
-import co.streamx.fluent.extree.expression.LambdaExpression;
-import co.streamx.fluent.extree.expression.MemberExpression;
-import co.streamx.fluent.extree.expression.UnaryExpression;
+import co.streamx.fluent.extree.expression.*;
+import lombok.Getter;
+import lombok.val;
 
+@Getter
 public class Fluent<T> {
 
-	public static interface Property<T, R> extends Function<T, R>, Serializable {
+    public interface Property<T, R> extends Function<T, R>, Serializable {
+    }
 
-	}
+    @Getter
+    private static class MemberExtractor extends SimpleExpressionVisitor {
+        private MemberExpression memberExpression;
 
-	private LambdaExpression<Function<T, ?>> parsed;
-	private String member;
+        @Override
+        public Expression visit(MemberExpression e) {
+            memberExpression = e;
+            return e;
+        }
+    }
 
-	public Fluent<T> property(Property<T, ?> propertyRef) {
-		LambdaExpression<Function<T, ?>> parsed = LambdaExpression
-				.parse(propertyRef);
-		Expression body = parsed.getBody();
-		Expression method = body;
-		while (method instanceof UnaryExpression)
-			method = ((UnaryExpression) method).getFirst();
+    private LambdaExpression<Function<T, ?>> parsed;
+    private Member member;
 
-		member = ((MemberExpression) ((InvocationExpression) method)
-				.getTarget()).getMember().toString();
-		this.parsed = parsed;
-		return this;
-	}
+    public Fluent<T> property(Property<T, ?> propertyRef) {
+        LambdaExpression<Function<T, ?>> parsed = LambdaExpression
+                .parse(propertyRef);
+        val visitor = new MemberExtractor();
+        parsed.accept(visitor);
 
-	public LambdaExpression<Function<T, ?>> getParsed() {
-		return parsed;
-	}
+        member = visitor.getMemberExpression().getMember();
+        this.parsed = parsed;
 
-	public String getMember() {
-		return member;
-	}
+        return this;
+    }
 }

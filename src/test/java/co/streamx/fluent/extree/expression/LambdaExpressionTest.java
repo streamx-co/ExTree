@@ -361,7 +361,7 @@ public class LambdaExpressionTest implements Serializable {
         Fluent<Customer> f = new Fluent<Customer>();
         f.property(Customer::getData);
 
-        assertEquals("public int co.streamx.fluent.extree.Customer.getData()", f.getMember());
+        assertEquals("public int co.streamx.fluent.extree.Customer.getData()", f.getMember().toString());
 
         le = f.getParsed().compile();
 
