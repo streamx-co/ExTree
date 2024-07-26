@@ -90,4 +90,4 @@ ExTree is distributed under the terms of the LGPL license.
 
 - export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
 - mvn release:clean release:prepare -P release
-- mvn release:perform -P release
+- mvn release:perform -P release | mvn repository:bundle-create -P release

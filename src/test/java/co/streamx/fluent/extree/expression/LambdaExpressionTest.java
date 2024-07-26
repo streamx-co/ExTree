@@ -61,7 +61,7 @@ public class LambdaExpressionTest implements Serializable {
         le.toString();
 
         Date anotherDate = new Date(System.currentTimeMillis() + 1000);
-        assertEquals(pp.test(anotherDate), fr.apply(new Object[] { anotherDate }));
+        assertEquals(pp.test(anotherDate), fr.apply(new Object[]{anotherDate}));
 
         pp = d -> d.compareTo(anotherDate) < 10;
         le = LambdaExpression.parse(pp);
@@ -69,7 +69,7 @@ public class LambdaExpressionTest implements Serializable {
         fr = le.compile();
 
         Date date = new Date();
-        assertEquals(pp.test(date), fr.apply(new Object[] { date }));
+        assertEquals(pp.test(date), fr.apply(new Object[]{date}));
         // Predicate<java.util.Date> le = LambdaExpression.parse(pp);
         // le = LambdaExpression.parse(pp).compile();
         //
@@ -85,12 +85,12 @@ public class LambdaExpressionTest implements Serializable {
         LambdaExpression<Predicate<Float>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(pp.test(4f), le.apply(new Object[] { 4f }));
-        assertEquals(pp.test(7f), le.apply(new Object[] { 7f }));
-        assertEquals(pp.test(14f), le.apply(new Object[] { 14f }));
-        assertEquals(pp.test(12f), le.apply(new Object[] { 12f }));
-        assertEquals(pp.test(6f), le.apply(new Object[] { 6f }));
-        assertEquals(pp.test(Float.NaN), le.apply(new Object[] { Float.NaN }));
+        assertEquals(pp.test(4f), le.apply(new Object[]{4f}));
+        assertEquals(pp.test(7f), le.apply(new Object[]{7f}));
+        assertEquals(pp.test(14f), le.apply(new Object[]{14f}));
+        assertEquals(pp.test(12f), le.apply(new Object[]{12f}));
+        assertEquals(pp.test(6f), le.apply(new Object[]{6f}));
+        assertEquals(pp.test(Float.NaN), le.apply(new Object[]{Float.NaN}));
     }
 
     @Test
@@ -99,13 +99,13 @@ public class LambdaExpressionTest implements Serializable {
         LambdaExpression<Predicate<String>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(pp.test("abc"), le.apply(new Object[] { "abc" }));
-        assertEquals(pp.test("abC"), le.apply(new Object[] { "abC" }));
+        assertEquals(pp.test("abc"), le.apply(new Object[]{"abc"}));
+        assertEquals(pp.test("abC"), le.apply(new Object[]{"abC"}));
     }
 
     @Test
     public void testParseP2() throws Throwable {
-        final Object[] ar = new Object[] { 5 };
+        final Object[] ar = new Object[]{5};
 
         SerializablePredicate<Integer> pp = t -> (ar.length << t) == (1 << 5) && ar[0] instanceof Number;
 
@@ -113,8 +113,8 @@ public class LambdaExpressionTest implements Serializable {
         parsed.toString();
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(pp.test(5), le.apply(new Object[] { 5 }));
-        assertEquals(pp.test(4), le.apply(new Object[] { 4 }));
+        assertEquals(pp.test(5), le.apply(new Object[]{5}));
+        assertEquals(pp.test(4), le.apply(new Object[]{4}));
     }
 
     @Test
@@ -126,7 +126,7 @@ public class LambdaExpressionTest implements Serializable {
 
         Function<Object[], ?> le = lambda.compile();
 
-        assertEquals(pp.test(5), le.apply(new Object[] { 5 }));
+        assertEquals(pp.test(5), le.apply(new Object[]{5}));
     }
 
     @Test
@@ -138,20 +138,20 @@ public class LambdaExpressionTest implements Serializable {
 
         Function<Object[], ?> le = lambda.compile();
 
-        assertEquals(pp.test(5), le.apply(new Object[] { 5 }));
+        assertEquals(pp.test(5), le.apply(new Object[]{5}));
     }
 
     @Test
     public void testParseP3() throws Throwable {
-        final Object[] ar = new Object[] { 5f };
+        final Object[] ar = new Object[]{5f};
 
         Predicate<Integer> pp = ensureSerializable(t -> ar[0] instanceof Float || (ar.length << t) == (1 << 5));
 
         LambdaExpression<Predicate<Integer>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(pp.test(5), le.apply(new Object[] { 5 }));
-        assertEquals(pp.test(4), le.apply(new Object[] { 4 }));
+        assertEquals(pp.test(5), le.apply(new Object[]{5}));
+        assertEquals(pp.test(4), le.apply(new Object[]{4}));
     }
 
     @Test
@@ -161,11 +161,11 @@ public class LambdaExpressionTest implements Serializable {
         LambdaExpression<Predicate<Object[]>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
 
-        Integer[] ar1 = { 2, 3, 4 };
-        Integer[] ar2 = { 2, 4 };
+        Integer[] ar1 = {2, 3, 4};
+        Integer[] ar2 = {2, 4};
 
-        assertEquals(pp.test(ar1), le.apply(new Object[] { ar1 }));
-        assertEquals(pp.test(ar2), le.apply(new Object[] { ar2 }));
+        assertEquals(pp.test(ar1), le.apply(new Object[]{ar1}));
+        assertEquals(pp.test(ar2), le.apply(new Object[]{ar2}));
     }
 
     @Test
@@ -201,13 +201,13 @@ public class LambdaExpressionTest implements Serializable {
     @Test
     public void testParse2() throws Throwable {
         SerializableBiFunction<Float, Float, Boolean> pp = (Float t,
-                                                Float r) -> t > 6 ? r < 12 : t > 2;
+                                                            Float r) -> t > 6 ? r < 12 : t > 2;
 
         LambdaExpression<BiFunction<Float, Float, Boolean>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(pp.apply(7f, 10f), le.apply(new Object[] { 7f, 10f }));
-        assertEquals(pp.apply(7f, 14f), le.apply(new Object[] { 7f, 14f }));
+        assertEquals(pp.apply(7f, 10f), le.apply(new Object[]{7f, 10f}));
+        assertEquals(pp.apply(7f, 14f), le.apply(new Object[]{7f, 14f}));
     }
 
     @Test
@@ -217,8 +217,8 @@ public class LambdaExpressionTest implements Serializable {
         LambdaExpression<Predicate<Integer>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(pp.test(5), le.apply(new Object[] { 5 }));
-        assertEquals(pp.test(11), le.apply(new Object[] { 11 }));
+        assertEquals(pp.test(5), le.apply(new Object[]{5}));
+        assertEquals(pp.test(11), le.apply(new Object[]{11}));
     }
 
     @Test
@@ -229,12 +229,12 @@ public class LambdaExpressionTest implements Serializable {
         LambdaExpression<Predicate<Integer>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(pp.test(5), le.apply(new Object[] { 5 }));
-        assertEquals(pp.test(11), le.apply(new Object[] { 11 }));
-        assertEquals(pp.test(29), le.apply(new Object[] { 29 }));
-        assertEquals(pp.test(26), le.apply(new Object[] { 26 }));
-        assertEquals(pp.test(18), le.apply(new Object[] { 18 }));
-        assertEquals(pp.test(14), le.apply(new Object[] { 14 }));
+        assertEquals(pp.test(5), le.apply(new Object[]{5}));
+        assertEquals(pp.test(11), le.apply(new Object[]{11}));
+        assertEquals(pp.test(29), le.apply(new Object[]{29}));
+        assertEquals(pp.test(26), le.apply(new Object[]{26}));
+        assertEquals(pp.test(18), le.apply(new Object[]{18}));
+        assertEquals(pp.test(14), le.apply(new Object[]{14}));
     }
 
     @Test
@@ -245,12 +245,12 @@ public class LambdaExpressionTest implements Serializable {
         LambdaExpression<Predicate<Integer>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(pp.test(5), le.apply(new Object[] { 5 }));
-        assertEquals(pp.test(11), le.apply(new Object[] { 11 }));
-        assertEquals(pp.test(29), le.apply(new Object[] { 29 }));
-        assertEquals(pp.test(26), le.apply(new Object[] { 26 }));
-        assertEquals(pp.test(18), le.apply(new Object[] { 18 }));
-        assertEquals(pp.test(14), le.apply(new Object[] { 14 }));
+        assertEquals(pp.test(5), le.apply(new Object[]{5}));
+        assertEquals(pp.test(11), le.apply(new Object[]{11}));
+        assertEquals(pp.test(29), le.apply(new Object[]{29}));
+        assertEquals(pp.test(26), le.apply(new Object[]{26}));
+        assertEquals(pp.test(18), le.apply(new Object[]{18}));
+        assertEquals(pp.test(14), le.apply(new Object[]{14}));
     }
 
     @Test
@@ -260,12 +260,12 @@ public class LambdaExpressionTest implements Serializable {
         LambdaExpression<Predicate<Integer>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(pp.test(5), le.apply(new Object[] { 5 }));
-        assertEquals(pp.test(11), le.apply(new Object[] { 11 }));
-        assertEquals(pp.test(29), le.apply(new Object[] { 29 }));
-        assertEquals(pp.test(26), le.apply(new Object[] { 26 }));
-        assertEquals(pp.test(18), le.apply(new Object[] { 18 }));
-        assertEquals(pp.test(14), le.apply(new Object[] { 14 }));
+        assertEquals(pp.test(5), le.apply(new Object[]{5}));
+        assertEquals(pp.test(11), le.apply(new Object[]{11}));
+        assertEquals(pp.test(29), le.apply(new Object[]{29}));
+        assertEquals(pp.test(26), le.apply(new Object[]{26}));
+        assertEquals(pp.test(18), le.apply(new Object[]{18}));
+        assertEquals(pp.test(14), le.apply(new Object[]{14}));
     }
 
     @Test
@@ -275,12 +275,12 @@ public class LambdaExpressionTest implements Serializable {
         LambdaExpression<Predicate<Integer>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(pp.test(5), le.apply(new Object[] { 5 }));
-        assertEquals(pp.test(11), le.apply(new Object[] { 11 }));
-        assertEquals(pp.test(29), le.apply(new Object[] { 29 }));
-        assertEquals(pp.test(26), le.apply(new Object[] { 26 }));
-        assertEquals(pp.test(18), le.apply(new Object[] { 18 }));
-        assertEquals(pp.test(14), le.apply(new Object[] { 14 }));
+        assertEquals(pp.test(5), le.apply(new Object[]{5}));
+        assertEquals(pp.test(11), le.apply(new Object[]{11}));
+        assertEquals(pp.test(29), le.apply(new Object[]{29}));
+        assertEquals(pp.test(26), le.apply(new Object[]{26}));
+        assertEquals(pp.test(18), le.apply(new Object[]{18}));
+        assertEquals(pp.test(14), le.apply(new Object[]{14}));
     }
 
     @Test
@@ -290,12 +290,12 @@ public class LambdaExpressionTest implements Serializable {
         LambdaExpression<Predicate<Integer>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(pp.test(5), le.apply(new Object[] { 5 }));
-        assertEquals(pp.test(11), le.apply(new Object[] { 11 }));
-        assertEquals(pp.test(29), le.apply(new Object[] { 29 }));
-        assertEquals(pp.test(26), le.apply(new Object[] { 26 }));
-        assertEquals(pp.test(18), le.apply(new Object[] { 18 }));
-        assertEquals(pp.test(14), le.apply(new Object[] { 14 }));
+        assertEquals(pp.test(5), le.apply(new Object[]{5}));
+        assertEquals(pp.test(11), le.apply(new Object[]{11}));
+        assertEquals(pp.test(29), le.apply(new Object[]{29}));
+        assertEquals(pp.test(26), le.apply(new Object[]{26}));
+        assertEquals(pp.test(18), le.apply(new Object[]{18}));
+        assertEquals(pp.test(14), le.apply(new Object[]{14}));
     }
 
     @Test
@@ -305,12 +305,12 @@ public class LambdaExpressionTest implements Serializable {
         LambdaExpression<Function<Integer, Integer>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(pp.apply(5), le.apply(new Object[] { 5 }));
-        assertEquals(pp.apply(-10), le.apply(new Object[] { -10 }));
-        assertEquals(pp.apply(29), le.apply(new Object[] { 29 }));
-        assertEquals(pp.apply(26), le.apply(new Object[] { 26 }));
-        assertEquals(pp.apply(-18), le.apply(new Object[] { -18 }));
-        assertEquals(pp.apply(14), le.apply(new Object[] { 14 }));
+        assertEquals(pp.apply(5), le.apply(new Object[]{5}));
+        assertEquals(pp.apply(-10), le.apply(new Object[]{-10}));
+        assertEquals(pp.apply(29), le.apply(new Object[]{29}));
+        assertEquals(pp.apply(26), le.apply(new Object[]{26}));
+        assertEquals(pp.apply(-18), le.apply(new Object[]{-18}));
+        assertEquals(pp.apply(14), le.apply(new Object[]{14}));
     }
 
     @Test
@@ -320,13 +320,13 @@ public class LambdaExpressionTest implements Serializable {
         LambdaExpression<Function<Integer, Byte>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(pp.apply(5), le.apply(new Object[] { 5 }));
-        assertEquals(pp.apply(-10), le.apply(new Object[] { -10 }));
-        assertEquals(pp.apply(29), le.apply(new Object[] { 29 }));
-        assertEquals(pp.apply(26), le.apply(new Object[] { 26 }));
-        assertEquals(pp.apply(-18), le.apply(new Object[] { -18 }));
-        assertEquals(pp.apply(144567), le.apply(new Object[] { 144567 }));
-        assertEquals(pp.apply(-144567), le.apply(new Object[] { -144567 }));
+        assertEquals(pp.apply(5), le.apply(new Object[]{5}));
+        assertEquals(pp.apply(-10), le.apply(new Object[]{-10}));
+        assertEquals(pp.apply(29), le.apply(new Object[]{29}));
+        assertEquals(pp.apply(26), le.apply(new Object[]{26}));
+        assertEquals(pp.apply(-18), le.apply(new Object[]{-18}));
+        assertEquals(pp.apply(144567), le.apply(new Object[]{144567}));
+        assertEquals(pp.apply(-144567), le.apply(new Object[]{-144567}));
     }
 
     @Test
@@ -336,8 +336,8 @@ public class LambdaExpressionTest implements Serializable {
         Function<Object[], ?> compiled = parsed.compile();
         Person person = new Person();
         person.setName("John");
-        assertEquals(pp.test(person,person), compiled.apply(new Object[] {person, person}));
-        assertEquals(pp.test(person, new Person()), compiled.apply(new Object[] {person, new Person()}));
+        assertEquals(pp.test(person, person), compiled.apply(new Object[]{person, person}));
+        assertEquals(pp.test(person, new Person()), compiled.apply(new Object[]{person, new Person()}));
     }
 
     @Test
@@ -349,14 +349,14 @@ public class LambdaExpressionTest implements Serializable {
 
         Customer c = new Customer(5);
 
-        assertEquals(pp.apply(c), le.apply(new Object[] { c }));
+        assertEquals(pp.apply(c), le.apply(new Object[]{c}));
 
         pp = (Customer c1) -> c1.getData();
 
         parsed = LambdaExpression.parse(pp);
         le = parsed.compile();
 
-        assertEquals(pp.apply(c), le.apply(new Object[] { c }));
+        assertEquals(pp.apply(c), le.apply(new Object[]{c}));
 
         Fluent<Customer> f = new Fluent<Customer>();
         f.property(Customer::getData);
@@ -365,7 +365,7 @@ public class LambdaExpressionTest implements Serializable {
 
         le = f.getParsed().compile();
 
-        assertEquals(pp.apply(c), le.apply(new Object[] { c }));
+        assertEquals(pp.apply(c), le.apply(new Object[]{c}));
     }
 
     @Test
@@ -378,12 +378,12 @@ public class LambdaExpressionTest implements Serializable {
         Person p = new Person();
         p.setAge(1);
         p.setHeight(2);
-        Function<Object[], ?> delegate = compiled.apply(new Object[] { p });
-        assertEquals(getFunction(p).apply(p), delegate.apply(new Object[] { p }));
+        Function<Object[], ?> delegate = compiled.apply(new Object[]{p});
+        assertEquals(getFunction(p).apply(p), delegate.apply(new Object[]{p}));
 
         p.setHeight(200);
-        delegate = compiled.apply(new Object[] { p });
-        assertEquals(getFunction(p).apply(p), delegate.apply(new Object[] { p }));
+        delegate = compiled.apply(new Object[]{p});
+        assertEquals(getFunction(p).apply(p), delegate.apply(new Object[]{p}));
     }
 
     @Test
@@ -394,7 +394,7 @@ public class LambdaExpressionTest implements Serializable {
         Function<Object[], ?> compiled = parsed.compile();
 
 //        Object delegate = compiled.apply(new Object[]{});
-        assertEquals(p.getAge(), compiled.apply(new Object[] { }));
+        assertEquals(p.getAge(), compiled.apply(new Object[]{}));
 
 //        p.setHeight(200);
 //        delegate = compiled.apply(new Object[] { p });
@@ -411,7 +411,7 @@ public class LambdaExpressionTest implements Serializable {
 
         Person person = new Person();
         person.setParent(new Person());
-        assertEquals(pp.apply(person), compiled.apply(new Object[] {person}));
+        assertEquals(pp.apply(person), compiled.apply(new Object[]{person}));
     }
 
     @Test
@@ -423,7 +423,6 @@ public class LambdaExpressionTest implements Serializable {
             person.setParent(new Person());
             System.out.println("Hello:" + pp.apply(person));
         };
-
 
 
         val parsed = LambdaExpression.parseMethod(r);
@@ -440,7 +439,7 @@ public class LambdaExpressionTest implements Serializable {
         val parsed = LambdaExpression.parseMethod(supplier);
         Function<Object[], ?> compiled = parsed.compile();
 
-        assertEquals(supplier.get(), compiled.apply(new Object[] { }));
+        assertEquals(supplier.get(), compiled.apply(new Object[]{}));
     }
 
     @Test(expected = NullPointerException.class)
@@ -467,7 +466,7 @@ public class LambdaExpressionTest implements Serializable {
 
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(e.apply("A"), le.apply(new Object[] { "A" }));
+        assertEquals(e.apply("A"), le.apply(new Object[]{"A"}));
     }
 
     @Test
@@ -477,7 +476,7 @@ public class LambdaExpressionTest implements Serializable {
 
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(e.apply("A"), le.apply(new Object[] { "A" }));
+        assertEquals(e.apply("A"), le.apply(new Object[]{"A"}));
     }
 
     @Test
@@ -487,7 +486,7 @@ public class LambdaExpressionTest implements Serializable {
 
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(e.apply("A"), le.apply(new Object[] { "A" }));
+        assertEquals(e.apply("A"), le.apply(new Object[]{"A"}));
     }
 
     @Test
@@ -497,7 +496,7 @@ public class LambdaExpressionTest implements Serializable {
 
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(e.apply("A"), le.apply(new Object[] { "A" }));
+        assertEquals(e.apply("A"), le.apply(new Object[]{"A"}));
     }
 
     @Test
@@ -510,7 +509,7 @@ public class LambdaExpressionTest implements Serializable {
 
         Person t = new Person();
         t.setName("Maria Bonita");
-        assertEquals(p.test(t), le.apply(new Object[] { t }));
+        assertEquals(p.test(t), le.apply(new Object[]{t}));
     }
 
     @Test
@@ -542,7 +541,7 @@ public class LambdaExpressionTest implements Serializable {
 
         Person t = new Person();
         t.setName(name);
-        assertEquals(p.test(t), le.apply(new Object[] { t }));
+        assertEquals(p.test(t), le.apply(new Object[]{t}));
     }
 
     @Test
@@ -559,13 +558,13 @@ public class LambdaExpressionTest implements Serializable {
 
         Function<Object[], ?> le = ex.compile();
 
-        assertEquals(p.test(t), le.apply(new Object[] { t }));
+        assertEquals(p.test(t), le.apply(new Object[]{t}));
 
         t.setAge(age);
-        assertEquals(p.test(t), le.apply(new Object[] { t }));
+        assertEquals(p.test(t), le.apply(new Object[]{t}));
 
         t.setHeight((int) height + 1);
-        assertEquals(p.test(t), le.apply(new Object[] { t }));
+        assertEquals(p.test(t), le.apply(new Object[]{t}));
     }
 
     @Test
@@ -580,13 +579,13 @@ public class LambdaExpressionTest implements Serializable {
 
         Function<Object[], ?> le = ex.compile();
 
-        assertEquals(p.test(t), le.apply(new Object[] { t }));
+        assertEquals(p.test(t), le.apply(new Object[]{t}));
 
         t.setName("Bob");
-        assertEquals(p.test(t), le.apply(new Object[] { t }));
+        assertEquals(p.test(t), le.apply(new Object[]{t}));
 
         t.setAge(20);
-        assertEquals(p.test(t), le.apply(new Object[] { t }));
+        assertEquals(p.test(t), le.apply(new Object[]{t}));
     }
 
     @Test
@@ -597,7 +596,7 @@ public class LambdaExpressionTest implements Serializable {
 
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(e.apply("A"), le.apply(new Object[] { "A" }));
+        assertEquals(e.apply("A"), le.apply(new Object[]{"A"}));
     }
 
     @Test
@@ -609,7 +608,7 @@ public class LambdaExpressionTest implements Serializable {
 
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(e.apply("A"), le.apply(new Object[] { "A" }));
+        assertEquals(e.apply("A"), le.apply(new Object[]{"A"}));
     }
 
     @Test
@@ -621,10 +620,10 @@ public class LambdaExpressionTest implements Serializable {
         Function<Object[], ?> le = lambda.compile();
 
         Person t = new Person();
-        assertEquals(personAnd.test(t), le.apply(new Object[] { t }));
+        assertEquals(personAnd.test(t), le.apply(new Object[]{t}));
 
         t.setAge(20);
-        assertEquals(personAnd.test(t), le.apply(new Object[] { t }));
+        assertEquals(personAnd.test(t), le.apply(new Object[]{t}));
     }
 
     @Test
@@ -637,10 +636,10 @@ public class LambdaExpressionTest implements Serializable {
         Function<Object[], ?> le = lambda.compile();
 
         Person t = new Person();
-        assertEquals(personAnd.test(t), le.apply(new Object[] { t }));
+        assertEquals(personAnd.test(t), le.apply(new Object[]{t}));
 
         t.setAge(20);
-        assertEquals(personAnd.test(t), le.apply(new Object[] { t }));
+        assertEquals(personAnd.test(t), le.apply(new Object[]{t}));
     }
 
     @Test
@@ -651,7 +650,7 @@ public class LambdaExpressionTest implements Serializable {
 
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(e.apply("A"), le.apply(new Object[] { "A" }));
+        assertEquals(e.apply("A"), le.apply(new Object[]{"A"}));
     }
 
     @Test
@@ -663,7 +662,7 @@ public class LambdaExpressionTest implements Serializable {
 
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(e.apply("A"), le.apply(new Object[] { "A" }));
+        assertEquals(e.apply("A"), le.apply(new Object[]{"A"}));
     }
 
     @Test
@@ -679,7 +678,7 @@ public class LambdaExpressionTest implements Serializable {
         Function<Object[], Function<Object[], ?>> compiled = (Function<Object[], Function<Object[], ?>>) lambda
                 .compile();
         Function<Object[], ?> applied0 = compiled.apply(new Object[0]);
-        Object applied = applied0.apply(new Object[] { 3 });
+        Object applied = applied0.apply(new Object[]{3});
 
         assertEquals(e.apply(3), applied);
     }
@@ -691,9 +690,9 @@ public class LambdaExpressionTest implements Serializable {
 
         SerializableFunction<Short, SerializableBiFunction<Float, Character, Float>> e = y -> (x,
                                                                                                z) -> y / x - z
-                                                                                                       + f.floatValue()
-                                                                                                       + 3
-                                                                                                       - getSomething();
+                + f.floatValue()
+                + 3
+                - getSomething();
 
         LambdaExpression<Function<Short, SerializableBiFunction<Float, Character, Float>>> parsed = LambdaExpression
                 .parse(e);
@@ -701,8 +700,8 @@ public class LambdaExpressionTest implements Serializable {
         Function<Object[], Function<Object[], ?>> compiled = (Function<Object[], Function<Object[], ?>>) parsed
                 .compile();
 
-        Function<Object[], ?> a1 = compiled.apply(new Object[] { (short) 23 });
-        Object a2 = a1.apply(new Object[] { 1.2f, 'g' });
+        Function<Object[], ?> a1 = compiled.apply(new Object[]{(short) 23});
+        Object a2 = a1.apply(new Object[]{1.2f, 'g'});
 
         assertEquals(e.apply((short) 23).apply(1.2f, 'g'), a2);
     }
@@ -713,9 +712,9 @@ public class LambdaExpressionTest implements Serializable {
         Number f = 56;
 
         SerializableFunction<Short, BiFunction<Float, Character, Function<Integer, Float>>> e = y -> (x,
-                                                                                          z) -> (m) -> y / x - z
-                                                                                                  + f.floatValue() + 3
-                                                                                                  - getSomething() + m;
+                                                                                                      z) -> (m) -> y / x - z
+                + f.floatValue() + 3
+                - getSomething() + m;
 
         var parsed = LambdaExpression.parse(e);
 
@@ -731,9 +730,9 @@ public class LambdaExpressionTest implements Serializable {
 
         val compiled = (Function<Object[], Function<Object[], Function<Object[], ?>>>) parsed.compile();
 
-        val a1 = compiled.apply(new Object[] { (short) 23 });
-        val a2 = a1.apply(new Object[] { 1.2f, 'g' });
-        val a3 = a2.apply(new Object[] { 153 });
+        val a1 = compiled.apply(new Object[]{(short) 23});
+        val a2 = a1.apply(new Object[]{1.2f, 'g'});
+        val a3 = a2.apply(new Object[]{153});
 
         assertEquals(e.apply((short) 23).apply(1.2f, 'g').apply(153), a3);
     }
@@ -770,7 +769,7 @@ public class LambdaExpressionTest implements Serializable {
 
         Function<Object[], ?> le = ex.compile();
 
-        assertEquals(p.get(), le.apply(new Object[] {}));
+        assertEquals(p.get(), le.apply(new Object[]{}));
 
     }
 
@@ -789,7 +788,7 @@ public class LambdaExpressionTest implements Serializable {
 
         Function<Object[], ?> le = ex.compile();
 
-        assertEquals(p.get(), le.apply(new Object[] {}));
+        assertEquals(p.get(), le.apply(new Object[]{}));
 
     }
 
@@ -831,24 +830,48 @@ public class LambdaExpressionTest implements Serializable {
         LambdaExpression<Predicate<Integer>> parsed = LambdaExpression.parse(pp);
         Function<Object[], ?> le = parsed.compile();
 
-        assertEquals(pp.test(5), le.apply(new Object[] { 5 }));
-        assertEquals(pp.test(11), le.apply(new Object[] { 11 }));
-        assertEquals(pp.test(29), le.apply(new Object[] { 29 }));
-        assertEquals(pp.test(26), le.apply(new Object[] { 26 }));
-        assertEquals(pp.test(18), le.apply(new Object[] { 18 }));
-        assertEquals(pp.test(14), le.apply(new Object[] { 14 }));
+        assertEquals(pp.test(5), le.apply(new Object[]{5}));
+        assertEquals(pp.test(11), le.apply(new Object[]{11}));
+        assertEquals(pp.test(29), le.apply(new Object[]{29}));
+        assertEquals(pp.test(26), le.apply(new Object[]{26}));
+        assertEquals(pp.test(18), le.apply(new Object[]{18}));
+        assertEquals(pp.test(14), le.apply(new Object[]{14}));
     }
 
-     @Test
-     public void testGetExpressionType() {
+    @Test
+    public void testGetExpressionType() {
 
-         SerializableSupplier<Long> currentTimeMillis = System::currentTimeMillis;
+        SerializableSupplier<Long> currentTimeMillis = System::currentTimeMillis;
 
-         LambdaExpression<Supplier<Long>> parsed = LambdaExpression.parse(currentTimeMillis);
+        LambdaExpression<Supplier<Long>> parsed = LambdaExpression.parse(currentTimeMillis);
 
-         System.out.println(parsed.compile().apply(new Object[0]));
+        System.out.println(parsed.compile().apply(new Object[0]));
 
-     }
+    }
+
+    static int invocations = 0;
+
+    public static void method() {
+        invocations++;
+    }
+
+    @FunctionalInterface
+    interface Callable extends Serializable {
+        void call();
+    }
+
+    @Test
+    public void testIssue5() {
+        Callable callable1 = () -> method();
+        Callable callable2 = LambdaExpressionTest::method;
+        var expression1 = LambdaExpression.parse(callable1);
+        var expression2 = LambdaExpression.parse(callable2);
+
+        expression1.compile().apply(new Object[0]);
+        expression2.compile().apply(new Object[0]);
+
+        assertEquals(2, invocations);
+    }
 
     // @Test
     // public void testGetResultType() {

@@ -351,7 +351,7 @@ class ExpressionClassCracker {
                 instance, extracted.getImplMethodName(), extracted.getImplMethodSignature(), synthetic);
 
         final Class<?> type = actualVisitor.getType();
-        Expression reducedExpression = type == Void.TYPE ? null
+        Expression reducedExpression = type == Void.TYPE ? actualVisitor.getResult()
                 : TypeConverter.convert(actualVisitor.getResult(), type);
 
         List<Expression> block = actualVisitor.getStatements();
