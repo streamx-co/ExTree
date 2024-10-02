@@ -16,7 +16,6 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 
 import lombok.val;
-import lombok.var;
 import org.danekja.java.misc.serializable.SerializableRunnable;
 import org.danekja.java.util.function.serializable.*;
 import org.junit.Test;
@@ -416,12 +415,12 @@ public class LambdaExpressionTest implements Serializable {
 
     @Test
     public void testMethodRef41() throws Throwable {
-
+        
         SerializableRunnable r = () -> {
             SerializableFunction<Person, Integer> pp = p -> p.getParent().getHeight();
             Person person = new Person();
             person.setParent(new Person());
-            System.out.println("Hello:" + pp.apply(person));
+            System.out.println("Hello1 \2, good \1:" + pp.apply(person) + "!!" + System.currentTimeMillis() + System.getProperty("user.name"));
         };
 
 

@@ -12,11 +12,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import lombok.SneakyThrows;
 import lombok.val;
-import lombok.var;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.Handle;
@@ -796,7 +794,68 @@ final class ExpressionMethodVisitor extends MethodVisitor {
         }
     }
 
+    static final char TAG_ARG = '\u0001';
+    static final char TAG_CONST = '\u0002';
+
     @SneakyThrows
+    private void makeConcatWithConstants(String descriptor, Object[] bootstrapMethodArguments) {
+        val argsTypes = Type.getArgumentTypes(descriptor);
+        Class<?>[] parameterTypes = getParameterTypes(argsTypes);
+        Expression[] params = new Expression[parameterTypes.length];
+        for (var i = params.length - 1; i >= 0; i--)
+            params[i] = _exprStack.pop();
+        var recipe = (String) bootstrapMethodArguments[0];
+
+        Expression esb = Expression.newInstance(StringBuilder.class.getConstructor(), List.of());
+        var appendString = StringBuilder.class.getMethod("append", String.class);
+
+        var curConst = 1;
+        var curParam = 0;
+        var b = new StringBuilder();
+        for (var i = 0; i < recipe.length(); i++) {
+            var c = recipe.charAt(i);
+
+            if (c == TAG_ARG) {
+                if (b.length() > 0) {
+                    esb = Expression.invoke(esb, appendString, Expression.constant(b.toString()));
+                    b.setLength(0);
+                }
+
+                var append = getAppendMethod(parameterTypes[curParam]);
+                esb = Expression.invoke(esb, append, params[curParam++]);
+                continue;
+            }
+
+            if (c == TAG_CONST) b.append(bootstrapMethodArguments[curConst++]);
+            else b.append(c);
+        }
+
+        if (b.length() > 0) {
+            esb = Expression.invoke(esb, appendString, Expression.constant(b.toString()));
+        }
+
+        var result = Expression.invoke(esb, StringBuilder.class.getMethod("toString"));
+        _exprStack.push(result);
+    }
+
+    private static Method getAppendMethod(Class<?> type) throws NoSuchMethodException {
+        Method append = null;
+
+        if (!type.isPrimitive()) {
+            try {
+                append = StringBuilder.class.getMethod("append", type);
+            } catch (NoSuchMethodException no) {
+                type = Object.class;
+            }
+        } else if (type == Byte.TYPE || type == Short.TYPE) {
+            type = Integer.TYPE;
+        }
+
+        if (append == null)
+            append = StringBuilder.class.getMethod("append", type);
+        return append;
+    }
+
     @Override
     public void visitInvokeDynamicInsn(String name,
                                        String descriptor,
@@ -804,6 +863,10 @@ final class ExpressionMethodVisitor extends MethodVisitor {
                                        Object... bootstrapMethodArguments) {
 
         String bootMethod = bootstrapMethodHandle.getName();
+        if (bootstrapMethodHandle.getOwner().equals("java/lang/invoke/StringConcatFactory") && name.equals("makeConcatWithConstants")) {
+            makeConcatWithConstants(descriptor, bootstrapMethodArguments);
+            return;
+        }
         if (!bootstrapMethodHandle.getOwner().equals(LambdaMetafactoryClassInternalName)
                 || !"Metafactory".regionMatches(true, 0, bootMethod, bootMethod.length() - "Metafactory".length(),
                 "Metafactory".length())) {
@@ -822,7 +885,12 @@ final class ExpressionMethodVisitor extends MethodVisitor {
         val methodDescriptor = handle.getDesc();
         val targetParameterTypes = getParameterTypes(Type.getArgumentTypes(methodDescriptor));
         val methodName = handle.getName();
-        val method = containingClass.getDeclaredMethod(methodName, targetParameterTypes);
+        Method method;
+        try {
+            method = containingClass.getDeclaredMethod(methodName, targetParameterTypes);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
 
         var params = Expression.getParameters(method);
         val member = Expression.member(ExpressionType.MethodAccess, optionalThis, method,
