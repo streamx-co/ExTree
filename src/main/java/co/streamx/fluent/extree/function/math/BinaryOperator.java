@@ -183,7 +183,7 @@ public enum BinaryOperator {
 		}
 	},
 	/**
-	 * binary exponent operator (<tt>left<sup>right</sup></tt>).
+	 * binary exponent operator (left<sup>right</sup>).
 	 */
 	Power {
 		@Override

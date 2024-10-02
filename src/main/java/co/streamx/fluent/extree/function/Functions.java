@@ -208,7 +208,7 @@ public final class Functions {
 	}
 
 	/**
-	 * Returns the value of <tt>left.apply(T)<sup>right.apply(U)</sup></tt>.
+	 * Returns the value of left.apply(T)<sup>right.apply(U)</sup>.
 	 * 
 	 * @param <T>
 	 *            the type of the first argument.
@@ -218,7 +218,7 @@ public final class Functions {
 	 *            a function to extract the left hand value from T.
 	 * @param right
 	 *            a function to extract the right hand value from T.
-	 * @return the value of <tt>left.apply(T)<sup>right.apply(U)</sup></tt>
+	 * @return the value of left.apply(T)<sup>right.apply(U)</sup>
 	 */
 	public static <T, U> BiFunction<T, U, Number> power(Function<T, ? extends Number> left, Function<U, ? extends Number> right) {
 		return (T t, U u) -> BinaryOperator.Power.eval(left.apply(t), right.apply(u));

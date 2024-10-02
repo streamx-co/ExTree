@@ -801,6 +801,7 @@ public abstract class Expression {
      * @param body       The method implementation.
      * @param parameters The method parameters.
      * @param locals     The method locals.
+     * @param key        Deduplication key
      * @return A {@link LambdaExpression} as a method receiving the specified {@code arguments}, returning the
      *         {@code resultType} and having {@code body} for its implementation.
      */

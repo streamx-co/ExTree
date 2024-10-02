@@ -47,15 +47,19 @@ public final class LambdaExpression<F> extends InvocableExpression {
     /**
      * Gets a value indicating whether the lambda expression tree node represents a lambda expression calling a
      * method.
+     * 
+     * @return boolean indicator.
      */
     public boolean isMethodRef() {
         return parser != null;
     }
 
     /**
-     * If the LambdaExpression wraps a method call, then returns the method representation as an AST.<br/>
-     * Otherwise, returns the current lambda expression.<br/>
+     * If the LambdaExpression wraps a method call, then returns the method representation as an AST.<br>
+     * Otherwise, returns the current lambda expression.<br>
      * The result is always semantically equivalent to the current lambda expression.
+     * 
+     * @return lambda expression.
      */
     public LambdaExpression<F> parseMethodRef() {
         return isMethodRef() ? parser.get() : this;
