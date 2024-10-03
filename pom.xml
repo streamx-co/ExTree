@@ -135,7 +135,7 @@
 			<id>release</id>
 			<build>
 				<plugins>
-				    <plugin>
+				    <!--<plugin>
 		                <groupId>org.sonatype.plugins</groupId>
 		                <artifactId>nexus-staging-maven-plugin</artifactId>
 		                <version>1.7.0</version>
@@ -145,7 +145,7 @@
 		                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
 		                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
 		                </configuration>
-		            </plugin>
+		            </plugin>-->
 		
 		            <plugin>
 		                <groupId>org.apache.maven.plugins</groupId>
@@ -196,7 +196,7 @@
 						<executions>
 							<execution>
 								<id>sign-artifacts</id>
-								<phase>verify</phase>
+								<phase>package</phase>
 								<goals>
 									<goal>sign</goal>
 								</goals>
