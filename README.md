@@ -1,4 +1,4 @@
-![Java Version](https://img.shields.io/badge/java-%3E%3D%208-success) [![Maven Central](https://img.shields.io/maven-central/v/co.streamx.fluent/ex-tree?label=maven%20central)](https://central.sonatype.com/artifact/co.streamx.fluent/ex-tree)
+![Java Version](https://img.shields.io/badge/java-%3E%3D%2011-success) [![Maven Central](https://img.shields.io/maven-central/v/co.streamx.fluent/ex-tree?label=maven%20central)](https://central.sonatype.com/artifact/co.streamx.fluent/ex-tree)
 
 # ExTree
 
