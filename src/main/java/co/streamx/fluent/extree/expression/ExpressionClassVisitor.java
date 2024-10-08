@@ -1,62 +1,43 @@
 package co.streamx.fluent.extree.expression;
 
+import java.lang.classfile.MethodSignature;
+import java.lang.classfile.Signature;
+import java.lang.constant.ClassDesc;
+import java.lang.reflect.AccessFlag;
 import java.util.Collections;
 import java.util.List;
 
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Represents a visitor or rewriter for expression trees.
- * 
- * 
  */
 
-final class ExpressionClassVisitor extends ClassVisitor {
+final class ExpressionClassVisitor //extends ClassVisitor 
+        implements ExpressionResolver {
 
-    private final ClassLoader _loader;
+    @Getter
+    private final ClassLoader loader;
     private final Expression _me;
     private final String _method;
     private final String _methodDesc;
     private final boolean _synthetic;
 
-    private Expression _result;
-    private Class<?> _type;
+    @Getter
+    @Setter
+    private Expression result;
+    @Getter
+    private Class<?> type;
     private Class<?>[] _argTypes;
-    private Type _objectType;
+    private Signature _objectType;
 
+    @Getter
+    @Setter
     private List<Expression> statements;
+    @Getter
+    @Setter
     private List<Expression> locals;
-
-    Expression getResult() {
-        return _result;
-    }
-
-    void setResult(Expression result) {
-        _result = result;
-    }
-
-    void setStatements(List<Expression> statements) {
-        this.statements = statements;
-    }
-
-    List<Expression> getStatements() {
-        return statements;
-    }
-
-    void setLocals(List<Expression> locals) {
-        this.locals = locals;
-    }
-
-    List<Expression> getLocals() {
-        return locals;
-    }
-
-    Class<?> getType() {
-        return _type;
-    }
 
     ParameterExpression[] getParams() {
         ParameterExpression[] params = new ParameterExpression[_argTypes.length];
@@ -66,74 +47,67 @@ final class ExpressionClassVisitor extends ClassVisitor {
     }
 
     public ExpressionClassVisitor(ClassLoader loader, Expression instance, String method,
-            String methodDescriptor, boolean synthetic) {
-        super(Opcodes.ASM9);
-        _loader = loader;
+                                  String methodDescriptor, boolean synthetic) {
+        this.loader = loader;
         _me = instance;
         _method = method;
         _methodDesc = methodDescriptor;
         _synthetic = synthetic;
     }
 
-    ClassLoader getLoader() {
-        return _loader;
-    }
-
-    Class<?> getClass(Type t) {
+    public Class<?> getClass(Signature t) {
         try {
-            switch (t.getSort()) {
-            case Type.BOOLEAN:
-                return Boolean.TYPE;
-            case Type.CHAR:
-                return Character.TYPE;
-            case Type.BYTE:
-                return Byte.TYPE;
-            case Type.SHORT:
-                return Short.TYPE;
-            case Type.INT:
-                return Integer.TYPE;
-            case Type.FLOAT:
-                return Float.TYPE;
-            case Type.LONG:
-                return Long.TYPE;
-            case Type.DOUBLE:
-                return Double.TYPE;
-            case Type.VOID:
-                return Void.TYPE;
-            }
-            String cn = t.getInternalName();
-            cn = cn != null ? cn.replace('/', '.') : t.getClassName();
+            return switch (t) {
+                case Signature.BaseTypeSig b -> switch (b.baseType()) {
+//                case '[', 'L' -> TypeKind.ReferenceType;
+                    case 'B' -> Byte.TYPE;
+                    case 'C' -> Character.TYPE;
+                    case 'Z' -> Boolean.TYPE;
+                    case 'S' -> Short.TYPE;
+                    case 'I' -> Integer.TYPE;
+                    case 'F' -> Float.TYPE;
+                    case 'J' -> Long.TYPE;
+                    case 'D' -> Double.TYPE;
+                    case 'V' -> Void.TYPE;
+                    default -> throw new IllegalArgumentException("Bad type: " + t);
+                };
+                case Signature.ArrayTypeSig a -> getClass(a.componentSignature()).arrayType();
+                case Signature.ClassTypeSig c -> Class.forName(c.className().replace('/', '.'), false, loader);
+                default -> throw new IllegalArgumentException("Bad type: " + t);
+            };
 
-            return Class.forName(cn, false, _loader);
         } catch (ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
 
-    @Override
-    public MethodVisitor visitMethod(int access,
-                                     String name,
-                                     String desc,
-                                     String signature,
-                                     String[] exceptions) {
+    //    @Override
+    public ExpressionMethodVisitor visitMethod(int access,
+                                               String name,
+                                               String desc,
+                                               String signature,
+                                               String[] exceptions) {
 
         if (!_method.equals(name) || !_methodDesc.equals(desc))
             return null;
 
-        Type ret = Type.getReturnType(desc);
 
-        _type = getClass(ret);
+        var sig = MethodSignature.parseFrom(desc);
 
-        Type[] args = Type.getArgumentTypes(desc);
-        Class<?>[] argTypes = new Class<?>[args.length];
+        var ret = sig.result();
 
-        for (int i = 0; i < args.length; i++)
-            argTypes[i] = getClass(args[i]);
+        type = getClass(ret);
 
-        if (_synthetic && _objectType != null && (access & Opcodes.ACC_SYNTHETIC) == 0) {
+        var args = sig.arguments();
+        Class<?>[] argTypes = new Class<?>[args.size()];
+
+        for (int i = 0; i < args.size(); i++)
+            argTypes[i] = getClass(args.get(i));
+
+        if (_synthetic && _objectType != null && (access & AccessFlag.SYNTHETIC.mask()) == 0) {
             // not synthetic - do not parse
             try {
-                boolean isStatic = (access & Opcodes.ACC_STATIC) != 0;
+                boolean isStatic = (access & AccessFlag.STATIC.mask()) != 0;
                 boolean isCtor = !isStatic && "<init>".equals(name);
                 Class<?> implClass = getClass(_objectType);
                 Expression[] arguments = new Expression[argTypes.length];
@@ -145,7 +119,7 @@ final class ExpressionClassVisitor extends ClassVisitor {
                     instance = null;
 
                     if (isCtor)
-                        _type = implClass;
+                        type = implClass;
 
                 } else {
                     if (_me != null) {
@@ -161,7 +135,7 @@ final class ExpressionClassVisitor extends ClassVisitor {
                     Class<?> argType = argTypes[i];
                     arguments[i] = Expression.parameter(argType, i + parameterBase);
                 }
-                _result = isCtor ? Expression.newInstance(implClass, argTypes, arguments)
+                result = isCtor ? Expression.newInstance(implClass, argTypes, arguments)
                         : isStatic ? Expression.invoke(implClass, name, argTypes, arguments)
                         : Expression.invoke(instance, name, argTypes, arguments);
                 locals = Collections.emptyList();
@@ -181,7 +155,7 @@ final class ExpressionClassVisitor extends ClassVisitor {
 
         Expression me = _me;
 
-        if ((access & Opcodes.ACC_STATIC) == 0) {
+        if ((access & AccessFlag.STATIC.mask()) == 0) {
             if (me != null && !isConstant(me)) {
                 Class<?>[] newArgTypes = new Class<?>[argTypes.length + 1];
                 newArgTypes[0] = me.getResultType();
@@ -205,17 +179,16 @@ final class ExpressionClassVisitor extends ClassVisitor {
         return e instanceof ConstantExpression;
     }
 
-    @Override
+    //    @Override
     public void visit(int version,
                       int access,
                       String name,
-                      String signature,
+                      ClassDesc classDesc,
                       String superName,
                       String[] interfaces) {
 
         // potentially a method reference - store object type
-        if ((access & Opcodes.ACC_SYNTHETIC) == 0)
-            _objectType = Type.getObjectType(name);
-        super.visit(version, access, name, signature, superName, interfaces);
+        if ((access & AccessFlag.SYNTHETIC.mask()) == 0)
+            _objectType = Signature.of(classDesc);
     }
 }

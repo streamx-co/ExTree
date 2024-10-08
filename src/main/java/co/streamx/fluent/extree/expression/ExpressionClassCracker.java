@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.lang.classfile.ClassFile;
+import java.lang.classfile.MethodSignature;
+import java.lang.classfile.instruction.*;
 import java.lang.invoke.MethodHandleInfo;
 import java.lang.invoke.SerializedLambda;
 import java.lang.reflect.Method;
@@ -20,13 +23,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.Type;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 
+@SuppressWarnings("preview")
 class ExpressionClassCracker {
 
     private static final String DUMP_FOLDER_SYSTEM_PROPERTY = "jdk.internal.lambda.dumpProxyClasses";
@@ -60,7 +61,7 @@ class ExpressionClassCracker {
                 }
 
                 lambdaClassLoaderCreationError = null;
-                lambdaClassLoader = new URLClassLoader(new URL[] { folderURL });
+                lambdaClassLoader = new URLClassLoader(new URL[]{folderURL});
             }
         }
     }
@@ -247,7 +248,8 @@ class ExpressionClassCracker {
             InvocationExpression invocation = (InvocationExpression) stripped;
             InvocableExpression target = invocation.getTarget();
             if (target instanceof LambdaExpression<?>) {
-                REDUCE_CHECK: for (;;) {
+                REDUCE_CHECK:
+                for (; ; ) {
                     if (!lambdaType.isAssignableFrom(target.getResultType()))
                         break;
                     List<ParameterExpression> params = lambdaParams;
@@ -347,7 +349,7 @@ class ExpressionClassCracker {
             }
         }
 
-        ExpressionClassVisitor actualVisitor = parseClass(lambdaClassLoader, extracted.getImplClass(), 
+        ExpressionClassVisitor actualVisitor = parseClass(lambdaClassLoader, extracted.getImplClass(),
                 instance, extracted.getImplMethodName(), extracted.getImplMethodSignature(), synthetic);
 
         final Class<?> type = actualVisitor.getType();
@@ -370,11 +372,13 @@ class ExpressionClassCracker {
         // e.g. handle the case of a parameter for this
         if (capturedLength == 0) {
 
-            Type[] argTypes = Type.getArgumentTypes(extracted.getInstantiatedMethodType());
-            params = new ParameterExpression[argTypes.length];
+            var sig = MethodSignature.parseFrom(extracted.getInstantiatedMethodType());
 
-            for (int i = 0; i < argTypes.length; i++)
-                params[i] = Expression.parameter(actualVisitor.getClass(argTypes[i]), i);
+            var args = sig.arguments();
+            params = new ParameterExpression[args.size()];
+
+            for (int i = 0; i < args.size(); i++)
+                params[i] = Expression.parameter(actualVisitor.getClass(args.get(i)), i);
         } else {
             params = actualVisitor.getParams();
         }
@@ -501,11 +505,21 @@ class ExpressionClassCracker {
         throw new IllegalArgumentException("Not a lambda expression. No non-default method.");
     }
 
+    private static String getMethodDescriptor(Method m) {
+        var s = new StringBuilder()
+                .append('(');
+        for (final var c : m.getParameterTypes())
+            s.append(c.descriptorString());
+        return s.append(')')
+                .append(m.getReturnType().descriptorString())
+                .toString();
+    }
+
     private ExpressionClassVisitor parseClass(ClassLoader classLoader,
                                               String className,
                                               Expression instance,
                                               Method method) {
-        return parseClass(classLoader, className, instance, method.getName(), Type.getMethodDescriptor(method), false);
+        return parseClass(classLoader, className, instance, method.getName(), getMethodDescriptor(method), false);
     }
 
     private ExpressionClassVisitor parseClass(ClassLoader classLoader,
@@ -522,16 +536,96 @@ class ExpressionClassCracker {
                                               String method,
                                               String methodDescriptor,
                                               boolean synthetic) {
+
         String classFilePath = classFilePath(className);
         ExpressionClassVisitor visitor = new ExpressionClassVisitor(classLoader, instance, method, methodDescriptor,
                 synthetic);
+        byte[] classBytes;
         try (InputStream classStream = getResourceAsStream(classLoader, classFilePath)) {
-            ClassReader reader = new ClassReader(classStream);
-            reader.accept(visitor, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
-            return visitor;
+            classBytes = classStream.readAllBytes();
         } catch (IOException e) {
             throw new RuntimeException("error parsing class file " + classFilePath, e);
         }
+
+        ClassFile cf = ClassFile.of(
+                ClassFile.DebugElementsOption.DROP_DEBUG,
+                ClassFile.LineNumbersOption.DROP_LINE_NUMBERS);
+        var model = cf.parse(classBytes);
+        visitor.visit(model.majorVersion(), model.flags().flagsMask(), className, model.thisClass().asSymbol(),
+                null, null);
+
+        for (var m : model.methods()) {
+            if (!m.methodName().equalsString(method) ||
+                    !m.methodType().equalsString(methodDescriptor))
+                continue;
+
+            var methodVisitor = visitor.visitMethod(m.flags().flagsMask(), method, methodDescriptor,
+                    null, null);
+            if (methodVisitor == null)
+                break;
+
+            var code = m.code().orElseThrow();
+            methodVisitor.visitCode();
+            methodVisitor.visitMaxs(code.maxStack(), code.maxLocals());
+
+            for (var e : code) {
+                switch (e) {
+                    case ArrayLoadInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
+                    case ArrayStoreInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
+                    case BranchInstruction i -> methodVisitor.visitJumpInsn(i.opcode().bytecode(), i.target());
+                    case ConstantInstruction.IntrinsicConstantInstruction i ->
+                            methodVisitor.visitInsn(i.opcode().bytecode());
+                    case ConstantInstruction.ArgumentConstantInstruction i ->
+                            methodVisitor.visitIntInsn(i.opcode().bytecode(), i.constantValue());
+                    case ConstantInstruction.LoadConstantInstruction i ->
+                            methodVisitor.visitLdcInsn(i.constantEntry().constantValue());
+                    case ConvertInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
+                    case DiscontinuedInstruction.RetInstruction i ->
+                            methodVisitor.visitVarInsn(i.opcode().bytecode(), i.slot());
+                    case DiscontinuedInstruction.JsrInstruction i ->
+                            methodVisitor.visitJumpInsn(i.opcode().bytecode(), i.target());
+                    case ExceptionCatch i ->
+                            methodVisitor.visitTryCatchBlock(i.tryStart(), i.tryEnd(), i.handler(), i.catchType());
+                    case FieldInstruction i ->
+                            methodVisitor.visitFieldInsn(i.opcode().bytecode(), i.owner(), i.name().stringValue(), null);
+                    case IncrementInstruction i -> methodVisitor.visitIincInsn(i.slot(), i.constant());
+                    case InvokeDynamicInstruction i -> {
+//                        assert false;
+                        methodVisitor.visitInvokeDynamicInsn(i.name().stringValue(), i.typeSymbol(), i.bootstrapMethod(), i.bootstrapArgs());
+                    }
+                    case InvokeInstruction i -> methodVisitor.visitMethodInsn(i.opcode().bytecode(), i.owner(),
+                            i.name().stringValue(), i.typeSymbol(), i.isInterface());
+                    case LabelTarget i -> methodVisitor.visitLabel(i.label());
+                    case LoadInstruction i -> methodVisitor.visitVarInsn(i.opcode().bytecode(), i.slot());
+                    case LookupSwitchInstruction i ->
+                            methodVisitor.visitLookupSwitchInsn(i.defaultTarget(), null, null);
+                    case MonitorInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
+                    case NewMultiArrayInstruction i ->
+                            methodVisitor.visitMultiANewArrayInsn(i.arrayType(), i.dimensions());
+                    case NewObjectInstruction i -> methodVisitor.visitTypeInsn(i.opcode().bytecode(), i.className());
+                    case NewPrimitiveArrayInstruction i ->
+                            methodVisitor.visitIntInsn(i.opcode().bytecode(), i.typeKind().newarrayCode());
+                    case NewReferenceArrayInstruction i ->
+                            methodVisitor.visitTypeInsn(i.opcode().bytecode(), i.componentType());
+                    case NopInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
+                    case OperatorInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
+                    case ReturnInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
+                    case StackInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
+                    case StoreInstruction i -> methodVisitor.visitVarInsn(i.opcode().bytecode(), i.slot());
+                    case TableSwitchInstruction i ->
+                            methodVisitor.visitTableSwitchInsn(i.lowValue(), i.highValue(), i.defaultTarget(), i.cases());
+                    case ThrowInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
+                    case TypeCheckInstruction i -> methodVisitor.visitTypeInsn(i.opcode().bytecode(), i.type());
+                    default -> throw new IllegalArgumentException("Unknown instruction: " + e);
+                }
+            }
+
+            methodVisitor.visitEnd();
+
+            break;
+        }
+
+        return visitor;
     }
 
     private InputStream getResourceAsStream(ClassLoader classLoader,

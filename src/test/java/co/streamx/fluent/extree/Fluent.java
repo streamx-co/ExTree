@@ -6,7 +6,6 @@ import java.util.function.Function;
 
 import co.streamx.fluent.extree.expression.*;
 import lombok.Getter;
-import lombok.val;
 
 @Getter
 public class Fluent<T> {
@@ -31,7 +30,7 @@ public class Fluent<T> {
     public Fluent<T> property(Property<T, ?> propertyRef) {
         LambdaExpression<Function<T, ?>> parsed = LambdaExpression
                 .parse(propertyRef);
-        val visitor = new MemberExtractor();
+        var visitor = new MemberExtractor();
         parsed.accept(visitor);
 
         member = visitor.getMemberExpression().getMember();
