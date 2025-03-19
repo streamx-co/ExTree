@@ -9,6 +9,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.classfile.ClassFile;
 import java.lang.classfile.MethodSignature;
+import java.lang.classfile.attribute.CodeAttribute;
 import java.lang.classfile.instruction.*;
 import java.lang.invoke.MethodHandleInfo;
 import java.lang.invoke.SerializedLambda;
@@ -566,56 +567,61 @@ class ExpressionClassCracker {
 
             var code = m.code().orElseThrow();
             methodVisitor.visitCode();
-            methodVisitor.visitMaxs(code.maxStack(), code.maxLocals());
+            if (code instanceof CodeAttribute ca) {
+                methodVisitor.visitMaxs(ca.maxStack(), ca.maxLocals());
+            } else {
+                assert false;
+            }
+//            methodVisitor.visitMaxs(code.maxStack(), code.maxLocals());
 
             for (var e : code) {
                 switch (e) {
-                    case ArrayLoadInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
-                    case ArrayStoreInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
-                    case BranchInstruction i -> methodVisitor.visitJumpInsn(i.opcode().bytecode(), i.target());
+                    case ArrayLoadInstruction i -> methodVisitor.visitInsn(i.opcode());
+                    case ArrayStoreInstruction i -> methodVisitor.visitInsn(i.opcode());
+                    case BranchInstruction i -> methodVisitor.visitJumpInsn(i.opcode(), i.target());
                     case ConstantInstruction.IntrinsicConstantInstruction i ->
-                            methodVisitor.visitInsn(i.opcode().bytecode());
+                            methodVisitor.visitInsn(i.opcode());
                     case ConstantInstruction.ArgumentConstantInstruction i ->
-                            methodVisitor.visitIntInsn(i.opcode().bytecode(), i.constantValue());
+                            methodVisitor.visitIntInsn(i.opcode(), i.constantValue());
                     case ConstantInstruction.LoadConstantInstruction i ->
                             methodVisitor.visitLdcInsn(i.constantEntry().constantValue());
-                    case ConvertInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
+                    case ConvertInstruction i -> methodVisitor.visitInsn(i.opcode());
                     case DiscontinuedInstruction.RetInstruction i ->
-                            methodVisitor.visitVarInsn(i.opcode().bytecode(), i.slot());
+                            methodVisitor.visitVarInsn(i.opcode(), i.slot());
                     case DiscontinuedInstruction.JsrInstruction i ->
-                            methodVisitor.visitJumpInsn(i.opcode().bytecode(), i.target());
+                            methodVisitor.visitJumpInsn(i.opcode(), i.target());
                     case ExceptionCatch i ->
                             methodVisitor.visitTryCatchBlock(i.tryStart(), i.tryEnd(), i.handler(), i.catchType());
                     case FieldInstruction i ->
-                            methodVisitor.visitFieldInsn(i.opcode().bytecode(), i.owner(), i.name().stringValue(), null);
+                            methodVisitor.visitFieldInsn(i.opcode(), i.owner(), i.name().stringValue(), null);
                     case IncrementInstruction i -> methodVisitor.visitIincInsn(i.slot(), i.constant());
                     case InvokeDynamicInstruction i -> {
 //                        assert false;
                         methodVisitor.visitInvokeDynamicInsn(i.name().stringValue(), i.typeSymbol(), i.bootstrapMethod(), i.bootstrapArgs());
                     }
-                    case InvokeInstruction i -> methodVisitor.visitMethodInsn(i.opcode().bytecode(), i.owner(),
+                    case InvokeInstruction i -> methodVisitor.visitMethodInsn(i.opcode(), i.owner(),
                             i.name().stringValue(), i.typeSymbol(), i.isInterface());
                     case LabelTarget i -> methodVisitor.visitLabel(i.label());
-                    case LoadInstruction i -> methodVisitor.visitVarInsn(i.opcode().bytecode(), i.slot());
+                    case LoadInstruction i -> methodVisitor.visitVarInsn(i.opcode(), i.slot());
                     case LookupSwitchInstruction i ->
                             methodVisitor.visitLookupSwitchInsn(i.defaultTarget(), null, null);
-                    case MonitorInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
+                    case MonitorInstruction i -> methodVisitor.visitInsn(i.opcode());
                     case NewMultiArrayInstruction i ->
                             methodVisitor.visitMultiANewArrayInsn(i.arrayType(), i.dimensions());
-                    case NewObjectInstruction i -> methodVisitor.visitTypeInsn(i.opcode().bytecode(), i.className());
+                    case NewObjectInstruction i -> methodVisitor.visitTypeInsn(i.opcode(), i.className());
                     case NewPrimitiveArrayInstruction i ->
-                            methodVisitor.visitIntInsn(i.opcode().bytecode(), i.typeKind().newarrayCode());
+                            methodVisitor.visitIntInsn(i.opcode(), i.typeKind().newarrayCode());
                     case NewReferenceArrayInstruction i ->
-                            methodVisitor.visitTypeInsn(i.opcode().bytecode(), i.componentType());
-                    case NopInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
-                    case OperatorInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
-                    case ReturnInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
-                    case StackInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
-                    case StoreInstruction i -> methodVisitor.visitVarInsn(i.opcode().bytecode(), i.slot());
+                            methodVisitor.visitTypeInsn(i.opcode(), i.componentType());
+                    case NopInstruction i -> methodVisitor.visitInsn(i.opcode());
+                    case OperatorInstruction i -> methodVisitor.visitInsn(i.opcode());
+                    case ReturnInstruction i -> methodVisitor.visitInsn(i.opcode());
+                    case StackInstruction i -> methodVisitor.visitInsn(i.opcode());
+                    case StoreInstruction i -> methodVisitor.visitVarInsn(i.opcode(), i.slot());
                     case TableSwitchInstruction i ->
                             methodVisitor.visitTableSwitchInsn(i.lowValue(), i.highValue(), i.defaultTarget(), i.cases());
-                    case ThrowInstruction i -> methodVisitor.visitInsn(i.opcode().bytecode());
-                    case TypeCheckInstruction i -> methodVisitor.visitTypeInsn(i.opcode().bytecode(), i.type());
+                    case ThrowInstruction i -> methodVisitor.visitInsn(i.opcode());
+                    case TypeCheckInstruction i -> methodVisitor.visitTypeInsn(i.opcode(), i.type());
                     default -> throw new IllegalArgumentException("Unknown instruction: " + e);
                 }
             }

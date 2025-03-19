@@ -167,14 +167,14 @@ final class ExpressionMethodVisitor //extends MethodVisitor
     }
 
     //@Override
-    public void visitFieldInsn(int opcode,
+    public void visitFieldInsn(Opcode opcode,
                                ClassEntry owner,
                                String name,
                                String desc) {
         Expression e;
         boolean isSyntheticConstant = false;
         switch (opcode) {
-            case ClassFile.GETFIELD:
+            case Opcode.GETFIELD:
                 Expression instance = _exprStack.pop();
                 try {
                     e = Expression.get(instance, name);
@@ -184,7 +184,7 @@ final class ExpressionMethodVisitor //extends MethodVisitor
                 if (instance.getExpressionType() == ExpressionType.Constant && instance.getResultType().isSynthetic())
                     isSyntheticConstant = true;
                 break;
-            case ClassFile.GETSTATIC:
+            case Opcode.GETSTATIC:
                 try {
                     Class<?> containingClass = _classVisitor.getClass(Signature.ClassTypeSig.of(owner.asInternalName()));
                     e = Expression.get(containingClass, name);
@@ -194,8 +194,8 @@ final class ExpressionMethodVisitor //extends MethodVisitor
                     throw new RuntimeException(nsfe);
                 }
                 break;
-            case ClassFile.PUTFIELD:
-            case ClassFile.PUTSTATIC:
+            case Opcode.PUTFIELD:
+            case Opcode.PUTSTATIC:
             default:
                 throw notLambda(opcode);
         }
@@ -210,261 +210,251 @@ final class ExpressionMethodVisitor //extends MethodVisitor
     }
 
     //@Override
-    public void visitFrame(int type,
-                           int nLocal,
-                           Object[] local,
-                           int nStack,
-                           Object[] stack) {
-        throw notLambda(type);
-    }
-
-    //@Override
     public void visitIincInsn(int arg0,
                               int arg1) {
-        throw notLambda(ClassFile.IINC);
+        throw notLambda(Opcode.IINC);
     }
 
     //@Override
-    public void visitInsn(int opcode) {
+    public void visitInsn(Opcode opcode) {
         Expression e;
         Expression first;
         Expression second;
         switch (opcode) {
-            case ClassFile.ARRAYLENGTH:
+            case Opcode.ARRAYLENGTH:
                 e = Expression.arrayLength(_exprStack.pop());
                 break;
-            case ClassFile.ACONST_NULL:
+            case Opcode.ACONST_NULL:
                 e = Expression.constant(null, Object.class);
                 break;
-            case ClassFile.IALOAD:
-            case ClassFile.LALOAD:
-            case ClassFile.FALOAD:
-            case ClassFile.DALOAD:
-            case ClassFile.AALOAD:
-            case ClassFile.BALOAD:
-            case ClassFile.CALOAD:
-            case ClassFile.SALOAD:
+            case Opcode.IALOAD:
+            case Opcode.LALOAD:
+            case Opcode.FALOAD:
+            case Opcode.DALOAD:
+            case Opcode.AALOAD:
+            case Opcode.BALOAD:
+            case Opcode.CALOAD:
+            case Opcode.SALOAD:
                 first = _exprStack.pop();
                 second = _exprStack.pop();
                 e = Expression.arrayIndex(second, first);
                 break;
-            case ClassFile.DCONST_0:
+            case Opcode.DCONST_0:
                 e = Expression.constant(0d, Double.TYPE);
                 break;
-            case ClassFile.DCONST_1:
+            case Opcode.DCONST_1:
                 e = Expression.constant(1d, Double.TYPE);
                 break;
-            case ClassFile.FCMPG:
-            case ClassFile.FCMPL:
-            case ClassFile.DCMPG:
-            case ClassFile.DCMPL:
-            case ClassFile.LCMP:
+            case Opcode.FCMPG:
+            case Opcode.FCMPL:
+            case Opcode.DCMPG:
+            case Opcode.DCMPL:
+            case Opcode.LCMP:
                 first = _exprStack.pop();
                 second = _exprStack.pop();
                 e = Expression.subtract(second, first);
                 break;
-            case ClassFile.FCONST_0:
+            case Opcode.FCONST_0:
                 e = Expression.constant(0f, Float.TYPE);
                 break;
-            case ClassFile.FCONST_1:
+            case Opcode.FCONST_1:
                 e = Expression.constant(1f, Float.TYPE);
                 break;
-            case ClassFile.FCONST_2:
+            case Opcode.FCONST_2:
                 e = Expression.constant(2f, Float.TYPE);
                 break;
-            case ClassFile.ICONST_M1:
+            case Opcode.ICONST_M1:
                 e = Expression.constant(-1, Integer.TYPE);
                 break;
-            case ClassFile.ICONST_0:
+            case Opcode.ICONST_0:
                 e = Expression.constant(0, Integer.TYPE);
                 break;
-            case ClassFile.ICONST_1:
+            case Opcode.ICONST_1:
                 e = Expression.constant(1, Integer.TYPE);
                 break;
-            case ClassFile.ICONST_2:
+            case Opcode.ICONST_2:
                 e = Expression.constant(2, Integer.TYPE);
                 break;
-            case ClassFile.ICONST_3:
+            case Opcode.ICONST_3:
                 e = Expression.constant(3, Integer.TYPE);
                 break;
-            case ClassFile.ICONST_4:
+            case Opcode.ICONST_4:
                 e = Expression.constant(4, Integer.TYPE);
                 break;
-            case ClassFile.ICONST_5:
+            case Opcode.ICONST_5:
                 e = Expression.constant(5, Integer.TYPE);
                 break;
-            case ClassFile.LCONST_0:
+            case Opcode.LCONST_0:
                 e = Expression.constant(0l, Long.TYPE);
                 break;
-            case ClassFile.LCONST_1:
+            case Opcode.LCONST_1:
                 e = Expression.constant(1l, Long.TYPE);
                 break;
-            case ClassFile.IADD:
-            case ClassFile.LADD:
-            case ClassFile.FADD:
-            case ClassFile.DADD:
+            case Opcode.IADD:
+            case Opcode.LADD:
+            case Opcode.FADD:
+            case Opcode.DADD:
                 first = _exprStack.pop();
                 second = _exprStack.pop();
                 e = Expression.add(second, first);
                 break;
-            case ClassFile.ISUB:
-            case ClassFile.LSUB:
-            case ClassFile.FSUB:
-            case ClassFile.DSUB:
+            case Opcode.ISUB:
+            case Opcode.LSUB:
+            case Opcode.FSUB:
+            case Opcode.DSUB:
                 first = _exprStack.pop();
                 second = _exprStack.pop();
                 e = Expression.subtract(second, first);
                 break;
-            case ClassFile.IMUL:
-            case ClassFile.LMUL:
-            case ClassFile.FMUL:
-            case ClassFile.DMUL:
+            case Opcode.IMUL:
+            case Opcode.LMUL:
+            case Opcode.FMUL:
+            case Opcode.DMUL:
                 first = _exprStack.pop();
                 second = _exprStack.pop();
                 e = Expression.multiply(second, first);
                 break;
-            case ClassFile.IDIV:
-            case ClassFile.LDIV:
-            case ClassFile.FDIV:
-            case ClassFile.DDIV:
+            case Opcode.IDIV:
+            case Opcode.LDIV:
+            case Opcode.FDIV:
+            case Opcode.DDIV:
                 first = _exprStack.pop();
                 second = _exprStack.pop();
                 e = Expression.divide(second, first);
                 break;
-            case ClassFile.IREM:
-            case ClassFile.LREM:
-            case ClassFile.FREM:
-            case ClassFile.DREM:
+            case Opcode.IREM:
+            case Opcode.LREM:
+            case Opcode.FREM:
+            case Opcode.DREM:
                 first = _exprStack.pop();
                 second = _exprStack.pop();
                 e = Expression.modulo(second, first);
                 break;
-            case ClassFile.INEG:
-            case ClassFile.LNEG:
-            case ClassFile.FNEG:
-            case ClassFile.DNEG:
+            case Opcode.INEG:
+            case Opcode.LNEG:
+            case Opcode.FNEG:
+            case Opcode.DNEG:
                 first = _exprStack.pop();
                 e = Expression.negate(first);
                 break;
-            case ClassFile.ISHL:
-            case ClassFile.LSHL:
+            case Opcode.ISHL:
+            case Opcode.LSHL:
                 first = _exprStack.pop();
                 second = _exprStack.pop();
                 e = Expression.leftShift(second, first);
                 break;
-            case ClassFile.ISHR:
-            case ClassFile.LSHR:
+            case Opcode.ISHR:
+            case Opcode.LSHR:
                 first = _exprStack.pop();
                 second = _exprStack.pop();
                 e = Expression.rightShift(second, first);
                 break;
-            case ClassFile.IUSHR:
-            case ClassFile.LUSHR:
+            case Opcode.IUSHR:
+            case Opcode.LUSHR:
                 first = _exprStack.pop();
                 second = _exprStack.pop();
                 e = Expression.rightShift(second, first);
                 break;
-            case ClassFile.IAND:
-            case ClassFile.LAND:
+            case Opcode.IAND:
+            case Opcode.LAND:
                 first = _exprStack.pop();
                 second = _exprStack.pop();
                 e = Expression.bitwiseAnd(second, first);
                 break;
-            case ClassFile.IOR:
-            case ClassFile.LOR:
+            case Opcode.IOR:
+            case Opcode.LOR:
                 first = _exprStack.pop();
                 second = _exprStack.pop();
                 e = Expression.bitwiseOr(second, first);
                 break;
-            case ClassFile.IXOR:
-            case ClassFile.LXOR:
+            case Opcode.IXOR:
+            case Opcode.LXOR:
                 first = _exprStack.pop();
                 second = _exprStack.pop();
                 e = Expression.exclusiveOr(second, first);
                 break;
-            case ClassFile.I2B:
-            case ClassFile.I2C:
-            case ClassFile.I2S:
+            case Opcode.I2B:
+            case Opcode.I2C:
+            case Opcode.I2S:
                 first = _exprStack.pop();
-                e = Expression.convert(first, NumericTypeLookup2[opcode - ClassFile.I2B]);
+                e = Expression.convert(first, NumericTypeLookup2[opcode.bytecode() - Opcode.I2B.bytecode()]);
                 break;
-            case ClassFile.I2L:
-            case ClassFile.I2F:
-            case ClassFile.I2D:
+            case Opcode.I2L:
+            case Opcode.I2F:
+            case Opcode.I2D:
                 first = _exprStack.pop();
-                e = Expression.convert(first, NumericTypeLookup[opcode - ClassFile.I2L + 1]);
+                e = Expression.convert(first, NumericTypeLookup[opcode.bytecode() - Opcode.I2L.bytecode() + 1]);
                 break;
-            case ClassFile.L2I:
-            case ClassFile.L2F:
-            case ClassFile.L2D:
-                int l2l = opcode > ClassFile.L2I ? 1 : 0;
+            case Opcode.L2I:
+            case Opcode.L2F:
+            case Opcode.L2D:
+                int l2l = opcode.bytecode() > Opcode.L2I.bytecode() ? 1 : 0;
                 first = _exprStack.pop();
-                e = Expression.convert(first, NumericTypeLookup[opcode - ClassFile.L2I + l2l]);
+                e = Expression.convert(first, NumericTypeLookup[opcode.bytecode() - Opcode.L2I.bytecode() + l2l]);
                 break;
-            case ClassFile.F2I:
-            case ClassFile.F2L:
-            case ClassFile.F2D:
-                int f2f = opcode == ClassFile.F2D ? 1 : 0;
+            case Opcode.F2I:
+            case Opcode.F2L:
+            case Opcode.F2D:
+                int f2f = opcode == Opcode.F2D ? 1 : 0;
                 first = _exprStack.pop();
-                e = Expression.convert(first, NumericTypeLookup[opcode - ClassFile.F2I + f2f]);
+                e = Expression.convert(first, NumericTypeLookup[opcode.bytecode() - Opcode.F2I.bytecode() + f2f]);
                 break;
-            case ClassFile.D2I:
-            case ClassFile.D2L:
-            case ClassFile.D2F:
+            case Opcode.D2I:
+            case Opcode.D2L:
+            case Opcode.D2F:
                 first = _exprStack.pop();
-                e = Expression.convert(first, NumericTypeLookup[opcode - ClassFile.D2I]);
+                e = Expression.convert(first, NumericTypeLookup[opcode.bytecode() - Opcode.D2I.bytecode()]);
                 break;
-            case ClassFile.IRETURN:
-            case ClassFile.LRETURN:
-            case ClassFile.FRETURN:
-            case ClassFile.DRETURN:
-            case ClassFile.ARETURN:
+            case Opcode.IRETURN:
+            case Opcode.LRETURN:
+            case Opcode.FRETURN:
+            case Opcode.DRETURN:
+            case Opcode.ARETURN:
 
                 go(null);
 
                 return;
-            case ClassFile.SWAP:
+            case Opcode.SWAP:
                 first = _exprStack.pop();
                 second = _exprStack.pop();
                 _exprStack.push(first);
                 _exprStack.push(second);
-            case ClassFile.DUP:
-            case ClassFile.DUP_X1:
-            case ClassFile.DUP_X2:
-            case ClassFile.DUP2:
-            case ClassFile.DUP2_X1:
-            case ClassFile.DUP2_X2:
+            case Opcode.DUP:
+            case Opcode.DUP_X1:
+            case Opcode.DUP_X2:
+            case Opcode.DUP2:
+            case Opcode.DUP2_X1:
+            case Opcode.DUP2_X2:
                 // our stack is not divided to words
-                int base = (opcode - ClassFile.DUP) % 3;
+                int base = (opcode.bytecode() - Opcode.DUP.bytecode()) % 3;
                 base++;
                 dup(_exprStack, base, base - 1);
                 return;
-            case ClassFile.NOP:
-            case ClassFile.RETURN:
+            case Opcode.NOP:
+            case Opcode.RETURN:
                 return;
-            case ClassFile.POP:
-            case ClassFile.POP2:
+            case Opcode.POP:
+            case Opcode.POP2:
                 if (_statements == null)
                     _statements = new ArrayList<>();
                 _statements.add(_exprStack.pop());
                 return;
-            case ClassFile.AASTORE:
-            case ClassFile.BASTORE:
-            case ClassFile.CASTORE:
-            case ClassFile.DASTORE:
-            case ClassFile.FASTORE:
-            case ClassFile.IASTORE:
-            case ClassFile.LASTORE:
-            case ClassFile.SASTORE:
+            case Opcode.AASTORE:
+            case Opcode.BASTORE:
+            case Opcode.CASTORE:
+            case Opcode.DASTORE:
+            case Opcode.FASTORE:
+            case Opcode.IASTORE:
+            case Opcode.LASTORE:
+            case Opcode.SASTORE:
                 Expression value = _exprStack.pop();
                 Expression index = _exprStack.pop();
                 Expression newArrayInit = _exprStack.pop();
                 if (!(index instanceof ConstantExpression) || !index.getResultType().equals(Integer.TYPE))
                     throw notLambda(opcode);
 
-                if (!(newArrayInit instanceof NewArrayInitExpression))
+                if (!(newArrayInit instanceof NewArrayInitExpression newArrayInitExpression))
                     throw notLambda(opcode);
-                NewArrayInitExpression newArrayInitExpression = (NewArrayInitExpression) newArrayInit;
                 newArrayInitExpression.getInitializers().set((Integer) ((ConstantExpression) index).getValue(), value);
                 return;
             default:
@@ -486,15 +476,15 @@ final class ExpressionMethodVisitor //extends MethodVisitor
     }
 
     //@Override
-    public void visitIntInsn(int opcode,
+    public void visitIntInsn(Opcode opcode,
                              int operand) {
         switch (opcode) {
-            case ClassFile.BIPUSH:
-            case ClassFile.SIPUSH:
+            case Opcode.BIPUSH:
+            case Opcode.SIPUSH:
                 _exprStack.push(Expression.constant(operand, Integer.TYPE));
                 break;
-            case ClassFile.NEWARRAY:
-                _exprStack.push(createNewArrayInitExpression(opcode, arrayTypesByCode[operand - TypeKind.BooleanType.newarrayCode()]));
+            case Opcode.NEWARRAY:
+                _exprStack.push(createNewArrayInitExpression(opcode, arrayTypesByCode[operand - TypeKind.BOOLEAN.newarrayCode()]));
                 break;
             default:
                 throw notLambda(opcode);
@@ -502,66 +492,66 @@ final class ExpressionMethodVisitor //extends MethodVisitor
     }
 
     //@Override
-    public void visitJumpInsn(int opcode,
+    public void visitJumpInsn(Opcode opcode,
                               Label label) {
         int etype;
         switch (opcode) {
-            case ClassFile.GOTO:
+            case Opcode.GOTO:
 
                 go(label);
 
                 return;
             default:
-            case ClassFile.JSR:
+            case Opcode.JSR:
                 throw notLambda(opcode);
-            case ClassFile.IFEQ:
+            case Opcode.IFEQ:
                 etype = ExpressionType.NotEqual; // Equal
                 pushZeroConstantOrReduce();
                 break;
-            case ClassFile.IFNE:
+            case Opcode.IFNE:
                 etype = ExpressionType.Equal; // NotEqual
                 pushZeroConstantOrReduce();
                 break;
-            case ClassFile.IFLT:
+            case Opcode.IFLT:
                 etype = ExpressionType.GreaterThanOrEqual; // LessThan
                 pushZeroConstantOrReduce();
                 break;
-            case ClassFile.IFGE:
+            case Opcode.IFGE:
                 etype = ExpressionType.LessThan; // GreaterThanOrEqual
                 pushZeroConstantOrReduce();
                 break;
-            case ClassFile.IFGT:
+            case Opcode.IFGT:
                 etype = ExpressionType.LessThanOrEqual; // GreaterThan
                 pushZeroConstantOrReduce();
                 break;
-            case ClassFile.IFLE:
+            case Opcode.IFLE:
                 etype = ExpressionType.GreaterThan; // LessThanOrEqual
                 pushZeroConstantOrReduce();
                 break;
-            case ClassFile.IF_ICMPEQ:
-            case ClassFile.IF_ACMPEQ: // ??
+            case Opcode.IF_ICMPEQ:
+            case Opcode.IF_ACMPEQ: // ??
                 etype = ExpressionType.NotEqual; // Equal
                 break;
-            case ClassFile.IF_ICMPNE:
-            case ClassFile.IF_ACMPNE: // ??
+            case Opcode.IF_ICMPNE:
+            case Opcode.IF_ACMPNE: // ??
                 etype = ExpressionType.Equal; // NotEqual
                 break;
-            case ClassFile.IF_ICMPLT:
+            case Opcode.IF_ICMPLT:
                 etype = ExpressionType.GreaterThanOrEqual; // LessThan
                 break;
-            case ClassFile.IF_ICMPGE:
+            case Opcode.IF_ICMPGE:
                 etype = ExpressionType.LessThan; // GreaterThanOrEqual
                 break;
-            case ClassFile.IF_ICMPGT:
+            case Opcode.IF_ICMPGT:
                 etype = ExpressionType.LessThanOrEqual; // GreaterThan
                 break;
-            case ClassFile.IF_ICMPLE:
+            case Opcode.IF_ICMPLE:
                 etype = ExpressionType.GreaterThan; // LessThanOrEqual
                 break;
-            case ClassFile.IFNULL:
-            case ClassFile.IFNONNULL:
+            case Opcode.IFNULL:
+            case Opcode.IFNONNULL:
                 Expression e = Expression.isNull(_exprStack.pop());
-                if (opcode == ClassFile.IFNULL) // IFNONNULL
+                if (opcode == Opcode.IFNULL) // IFNONNULL
                     e = Expression.logicalNot(e);
 
                 branch(label, e);
@@ -739,20 +729,10 @@ final class ExpressionMethodVisitor //extends MethodVisitor
     }
 
     //@Override
-    public void visitLocalVariable(String name,
-                                   String desc,
-                                   String signature,
-                                   Label start,
-                                   Label end,
-                                   int index) {
-        throw notLambda(-1);
-    }
-
-    //@Override
     public void visitLookupSwitchInsn(Label dflt,
                                       int[] keys,
                                       Label[] labels) {
-        throw notLambda(ClassFile.LOOKUPSWITCH);
+        throw notLambda(Opcode.LOOKUPSWITCH);
     }
 
     //@Override
@@ -920,7 +900,7 @@ final class ExpressionMethodVisitor //extends MethodVisitor
     }
 
     //@Override
-    public void visitMethodInsn(int opcode,
+    public void visitMethodInsn(Opcode opcode,
                                 ClassEntry owner,
                                 String name,
                                 MethodTypeDesc desc,
@@ -936,7 +916,7 @@ final class ExpressionMethodVisitor //extends MethodVisitor
         Expression e;
 
         switch (opcode) {
-            case ClassFile.INVOKESPECIAL:
+            case Opcode.INVOKESPECIAL:
                 if (name.equals("<init>")) {
                     Class<?>[] parameterTypes = getParameterTypes(argsTypes);
                     convertArguments(arguments, parameterTypes);
@@ -949,8 +929,8 @@ final class ExpressionMethodVisitor //extends MethodVisitor
                     // semantics
                     break;
                 }
-            case ClassFile.INVOKEVIRTUAL:
-            case ClassFile.INVOKEINTERFACE:
+            case Opcode.INVOKEVIRTUAL:
+            case Opcode.INVOKEINTERFACE:
                 try {
                     Class<?> lambdaClass = _classVisitor.getClass(Signature.ClassTypeSig.of(owner.asInternalName()));
                     Expression instance = _exprStack.pop();
@@ -1009,7 +989,7 @@ final class ExpressionMethodVisitor //extends MethodVisitor
                 }
                 break;
 
-            case ClassFile.INVOKESTATIC:
+            case Opcode.INVOKESTATIC:
                 Class<?>[] parameterTypes = getParameterTypes(argsTypes);
                 convertArguments(arguments, parameterTypes);
                 try {
@@ -1063,7 +1043,7 @@ final class ExpressionMethodVisitor //extends MethodVisitor
     //@Override
     public void visitMultiANewArrayInsn(ClassEntry desc,
                                         int dims) {
-        throw notLambda(ClassFile.MULTIANEWARRAY);
+        throw notLambda(Opcode.MULTIANEWARRAY);
     }
 
    /* //@Override
@@ -1078,7 +1058,7 @@ final class ExpressionMethodVisitor //extends MethodVisitor
                                      int max,
                                      Label dflt,
                                      List<SwitchCase> cases) {
-        throw notLambda(ClassFile.TABLESWITCH);
+        throw notLambda(Opcode.TABLESWITCH);
     }
 
     //@Override
@@ -1086,29 +1066,29 @@ final class ExpressionMethodVisitor //extends MethodVisitor
                                    Label end,
                                    Label handler,
                                    Optional<ClassEntry> catchType) {
-        throw notLambda(-2);
+        throw notLambda("try-catch block");
     }
 
     //@Override
-    public void visitTypeInsn(int opcode,
+    public void visitTypeInsn(Opcode opcode,
                               ClassEntry type) {
         Class<?> resultType = _classVisitor.getClass(Signature.ClassTypeSig.of(type.asInternalName()));
         Expression e;
         switch (opcode) {
-            case ClassFile.NEW:
+            case Opcode.NEW:
                 e = Expression.constant(null, resultType);
                 break;
-            case ClassFile.CHECKCAST:
+            case Opcode.CHECKCAST:
                 if (resultType == Object.class)
                     // there is no point in casting to object
                     return;
                 e = Expression.convert(_exprStack.pop(), resultType);
                 break;
-            case ClassFile.ANEWARRAY:
+            case Opcode.ANEWARRAY:
                 e = createNewArrayInitExpression(opcode, resultType);
                 break;
 
-            case ClassFile.INSTANCEOF:
+            case Opcode.INSTANCEOF:
                 e = Expression.instanceOf(_exprStack.pop(), resultType);
                 break;
             default:
@@ -1118,7 +1098,7 @@ final class ExpressionMethodVisitor //extends MethodVisitor
         _exprStack.push(e);
     }
 
-    private Expression createNewArrayInitExpression(int opcode,
+    private Expression createNewArrayInitExpression(Opcode opcode,
                                                     Class<?> componentType) {
         Expression count = _exprStack.pop();
         if (!(count instanceof ConstantExpression) || !count.getResultType().equals(Integer.TYPE))
@@ -1128,7 +1108,7 @@ final class ExpressionMethodVisitor //extends MethodVisitor
     }
 
     //@Override
-    public void visitVarInsn(int opcode,
+    public void visitVarInsn(Opcode opcode,
                              int var) {
         if (_me != null) {
             if (var == 0) {
@@ -1142,31 +1122,31 @@ final class ExpressionMethodVisitor //extends MethodVisitor
 
         Class<?> type;
         switch (opcode) {
-            case ClassFile.ISTORE:
-            case ClassFile.ISTORE_0:
-            case ClassFile.ISTORE_1:
-            case ClassFile.ISTORE_2:
-            case ClassFile.ISTORE_3:
-            case ClassFile.LSTORE:
-            case ClassFile.LSTORE_0:
-            case ClassFile.LSTORE_1:
-            case ClassFile.LSTORE_2:
-            case ClassFile.LSTORE_3:
-            case ClassFile.FSTORE:
-            case ClassFile.FSTORE_0:
-            case ClassFile.FSTORE_1:
-            case ClassFile.FSTORE_2:
-            case ClassFile.FSTORE_3:
-            case ClassFile.DSTORE:
-            case ClassFile.DSTORE_0:
-            case ClassFile.DSTORE_1:
-            case ClassFile.DSTORE_2:
-            case ClassFile.DSTORE_3:
-            case ClassFile.ASTORE:
-            case ClassFile.ASTORE_0:
-            case ClassFile.ASTORE_1:
-            case ClassFile.ASTORE_2:
-            case ClassFile.ASTORE_3:
+            case Opcode.ISTORE:
+            case Opcode.ISTORE_0:
+            case Opcode.ISTORE_1:
+            case Opcode.ISTORE_2:
+            case Opcode.ISTORE_3:
+            case Opcode.LSTORE:
+            case Opcode.LSTORE_0:
+            case Opcode.LSTORE_1:
+            case Opcode.LSTORE_2:
+            case Opcode.LSTORE_3:
+            case Opcode.FSTORE:
+            case Opcode.FSTORE_0:
+            case Opcode.FSTORE_1:
+            case Opcode.FSTORE_2:
+            case Opcode.FSTORE_3:
+            case Opcode.DSTORE:
+            case Opcode.DSTORE_0:
+            case Opcode.DSTORE_1:
+            case Opcode.DSTORE_2:
+            case Opcode.DSTORE_3:
+            case Opcode.ASTORE:
+            case Opcode.ASTORE_0:
+            case Opcode.ASTORE_1:
+            case Opcode.ASTORE_2:
+            case Opcode.ASTORE_3:
                 if (_localVariables == null)
                     _localVariables = new Expression[10];
 
@@ -1181,42 +1161,42 @@ final class ExpressionMethodVisitor //extends MethodVisitor
 
                 _localVariables[var] = _exprStack.pop();
                 return;
-            case ClassFile.RET:
+            case Opcode.RET:
             default:
                 throw notLambda(opcode);
-            case ClassFile.ILOAD_0:
-            case ClassFile.ILOAD_1:
-            case ClassFile.ILOAD_2:
-            case ClassFile.ILOAD_3:
-            case ClassFile.ILOAD:
+            case Opcode.ILOAD_0:
+            case Opcode.ILOAD_1:
+            case Opcode.ILOAD_2:
+            case Opcode.ILOAD_3:
+            case Opcode.ILOAD:
                 type = Integer.TYPE;
                 break;
-            case ClassFile.LLOAD_0:
-            case ClassFile.LLOAD_1:
-            case ClassFile.LLOAD_2:
-            case ClassFile.LLOAD_3:
-            case ClassFile.LLOAD:
+            case Opcode.LLOAD_0:
+            case Opcode.LLOAD_1:
+            case Opcode.LLOAD_2:
+            case Opcode.LLOAD_3:
+            case Opcode.LLOAD:
                 type = Long.TYPE;
                 break;
-            case ClassFile.FLOAD_0:
-            case ClassFile.FLOAD_1:
-            case ClassFile.FLOAD_2:
-            case ClassFile.FLOAD_3:
-            case ClassFile.FLOAD:
+            case Opcode.FLOAD_0:
+            case Opcode.FLOAD_1:
+            case Opcode.FLOAD_2:
+            case Opcode.FLOAD_3:
+            case Opcode.FLOAD:
                 type = Float.TYPE;
                 break;
-            case ClassFile.DLOAD_0:
-            case ClassFile.DLOAD_1:
-            case ClassFile.DLOAD_2:
-            case ClassFile.DLOAD_3:
-            case ClassFile.DLOAD:
+            case Opcode.DLOAD_0:
+            case Opcode.DLOAD_1:
+            case Opcode.DLOAD_2:
+            case Opcode.DLOAD_3:
+            case Opcode.DLOAD:
                 type = Double.TYPE;
                 break;
-            case ClassFile.ALOAD_0:
-            case ClassFile.ALOAD_1:
-            case ClassFile.ALOAD_2:
-            case ClassFile.ALOAD_3:
-            case ClassFile.ALOAD:
+            case Opcode.ALOAD_0:
+            case Opcode.ALOAD_1:
+            case Opcode.ALOAD_2:
+            case Opcode.ALOAD_3:
+            case Opcode.ALOAD:
                 if (var < _argTypes.length)
                     type = _argTypes[var];
                 else {
@@ -1239,24 +1219,11 @@ final class ExpressionMethodVisitor //extends MethodVisitor
         return var;
     }
 
-    static RuntimeException notLambda(int opcode) {
-        String opcodeName = Integer.toString(opcode);
-        Field[] ops = ClassFile.class.getFields();
-        for (int i = 0; i < ops.length; i++) {
-            Field f = ops[i];
-            if (Modifier.isStatic(f.getModifiers()) && f.getType() == Integer.TYPE) {
-                try {
-                    int test = f.getInt(null);
-                    if (test == opcode) {
-                        opcodeName = f.getName();
-                        break;
-                    }
-                } catch (IllegalAccessException e) {
-                    // suppress;
-                    break;
-                }
-            }
-        }
+    static RuntimeException notLambda(Opcode opcode) {
+        return notLambda(opcode.name());
+    }
+
+    static RuntimeException notLambda(String opcodeName) {
         return new IllegalArgumentException("Not a lambda expression. Opcode " + opcodeName + " is illegal.");
     }
 
