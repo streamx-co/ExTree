@@ -78,6 +78,9 @@
 				<configuration>
 					<source>24</source>
 					<target>24</target>
+					<compilerArgs>
+						<arg>-proc:full</arg>
+					</compilerArgs>
                 </configuration>
 			</plugin>
 			<plugin>
