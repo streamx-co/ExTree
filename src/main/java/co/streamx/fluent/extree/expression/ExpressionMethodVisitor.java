@@ -717,7 +717,8 @@ final class ExpressionMethodVisitor //extends MethodVisitor
             if (cst instanceof String) {
                 type = String.class;
             } else if (cst instanceof ClassDesc cd) {
-                value = type = _classVisitor.getClass(Signature.of(cd));
+                type = Class.class;
+                value = _classVisitor.getClass(Signature.of(cd));
             }
         }
         _exprStack.push(Expression.constant(value, type));
