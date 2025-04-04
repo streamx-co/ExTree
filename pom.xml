@@ -172,10 +172,10 @@
 					<plugin>
 						<groupId>org.apache.maven.plugins</groupId>
 						<artifactId>maven-javadoc-plugin</artifactId>
-						<version>3.4.1</version>
+						<version>3.11.2</version>
 						<configuration>
 							<links>
-								<link>http://docs.oracle.com/javase/8/docs/api</link>
+								<link>https://docs.oracle.com/en/java/javase/24/docs/api</link>
 							</links>
 						</configuration>
 						<executions>
