@@ -1,10 +1,10 @@
 package co.streamx.fluent.extree.expression;
 
 import java.io.Serializable;
-import java.lang.classfile.*;
-import java.lang.classfile.constantpool.ClassEntry;
-import java.lang.classfile.constantpool.LoadableConstantEntry;
-import java.lang.classfile.instruction.SwitchCase;
+import io.github.dmlloyd.classfile.*;
+import io.github.dmlloyd.classfile.constantpool.ClassEntry;
+//import java.lang.classfile.constantpool.LoadableConstantEntry;
+import io.github.dmlloyd.classfile.instruction.SwitchCase;
 import java.lang.constant.*;
 import java.lang.invoke.LambdaMetafactory;
 import java.lang.invoke.SerializedLambda;

@@ -1,6 +1,6 @@
 package co.streamx.fluent.extree.expression;
 
-import java.lang.classfile.Signature;
+import io.github.dmlloyd.classfile.Signature;
 import java.util.List;
 
 interface ExpressionResolver {

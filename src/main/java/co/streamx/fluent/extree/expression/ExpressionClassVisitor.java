@@ -1,12 +1,13 @@
 package co.streamx.fluent.extree.expression;
 
-import java.lang.classfile.MethodSignature;
-import java.lang.classfile.Signature;
+import io.github.dmlloyd.classfile.MethodSignature;
+import io.github.dmlloyd.classfile.Signature;
 import java.lang.constant.ClassDesc;
-import java.lang.reflect.AccessFlag;
+//import java.lang.reflect.AccessFlag;
 import java.util.Collections;
 import java.util.List;
 
+import io.github.dmlloyd.classfile.extras.reflect.AccessFlag;
 import lombok.Getter;
 import lombok.Setter;
 

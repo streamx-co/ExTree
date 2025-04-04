@@ -57,7 +57,13 @@
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.36</version>
+			<version>1.18.38</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.github.dmlloyd</groupId>
+			<artifactId>jdk-classfile-backport</artifactId>
+			<version>24.0</version>
 			<scope>provided</scope>
 		</dependency>
 	</dependencies>
@@ -76,8 +82,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.11.0</version>
 				<configuration>
-					<source>24</source>
-					<target>24</target>
+					<source>21</source>
+					<target>21</target>
                 </configuration>
 			</plugin>
 			<plugin>
